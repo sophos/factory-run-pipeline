@@ -1,0 +1,24 @@
+name: 'Refactr.it build pipeline'
+description: 'TODO'
+inputs:
+  api_token:
+    description: 'API token'
+    required: true
+  project_id:
+    description: 'Project ID'
+    required: true
+
+  job_id:
+    description: 'Job ID'
+    required: true
+
+  variables:
+    description: 'Additional environment variables'
+    required: false
+
+  api_url:
+    description: 'Refactr endpoint URL'
+    required: false
+runs:
+  using: 'node12'
+  main: 'dist/index.js'

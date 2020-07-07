@@ -1,0 +1,66 @@
+---
+parserOptions:
+  ecmaVersion: 2018
+  sourceType: module
+env:
+  es6: true
+  node: true
+rules:
+  # best practices
+  func-call-spacing: error
+  no-dupe-args: error
+  no-empty: error
+  no-extra-parens: error
+  no-extra-semi: error
+  no-irregular-whitespace: error
+  no-unreachable: error
+  require-atomic-updates: error
+  block-scoped-var: error
+  curly: ['error', 'all']
+  default-case: error
+  eqeqeq: error
+  no-alert: error
+  no-empty-function: error
+  no-eval: error
+  no-extend-native: error
+  no-extra-label: error
+  no-fallthrough: error
+  no-floating-decimal: error
+  no-implied-eval: error
+  no-new-func: error
+  no-useless-return: error
+  no-with: error
+  no-console: error
+  # style
+  semi: error
+  block-spacing: error
+  comma-dangle: error
+  indent: ['error', 'tab']
+  keyword-spacing: ['error', {
+    'before': true,
+    'after': true,
+    'overrides': {
+      'catch': {'after': false}
+    }
+  }]
+  linebreak-style: error
+  new-parens: error
+  no-lonely-if: error
+  no-mixed-spaces-and-tabs: error
+  no-trailing-spaces: error
+  object-curly-newline: error
+  #object-curly-spacing: ['error', 'always']
+  space-before-blocks: error
+  space-before-function-paren: ['error', {
+    'anonymous': 'never',
+    'named': 'never',
+    'asyncArrow': 'always'
+  }]
+  space-unary-ops: ['error', {
+    'words': true,
+    'nonwords': false
+  }]
+
+  key-spacing: error
+  #comma-spacing: error
+  quotes: ['error', 'single']
