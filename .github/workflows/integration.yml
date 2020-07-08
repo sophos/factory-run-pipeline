@@ -1,6 +1,4 @@
 on:
-  schedule:
-    - cron: 0 */6 * * *
   pull_request: {branches: master}
   push: {branches: master}
 
@@ -9,8 +7,11 @@ jobs:
     runs-on: ubuntu-latest
     name: Test integration with Refactr.it
     steps:
+      - id: ref
+        run: |
+          echo "::set-output name=branch::$(echo $GITHUB_REF | cut -d'/' -f 3)"
       - name: Run action
-        uses: refactr/action-run-pipeline@master
+        uses: refactr/action-run-pipeline@${{ steps.ref.outputs.branch }}
         with:
           project_id: 5e1e27f24258f8003814ce3a
           job_id: 5f031f6d9d1b5242e657443b
