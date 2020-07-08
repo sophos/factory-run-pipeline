@@ -1,7 +1,9 @@
 on:
+  shedule: {cron: 0 */6 * * *}
+  pull_request: {branches: master}
   push:
-    branches:
-      - master
+    - branches: master
+    - tags: v*
 
 jobs:
   test:
