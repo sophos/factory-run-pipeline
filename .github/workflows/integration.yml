@@ -7,8 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Test integration with Refactr.it
     steps:
-      - name: Run action
-        uses: ./
+      - uses: actions/checkout@v2
+      - uses: ./
         with:
           project_id: 5e1e27f24258f8003814ce3a
           job_id: 5f031f6d9d1b5242e657443b
