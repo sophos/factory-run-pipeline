@@ -1,24 +1,24 @@
-name: 'Refactr.it build pipeline'
-description: 'TODO'
+name: Refactr - Run Pipeline
+description: Runs a pipeline in the Refactr Platform.
+branding:
+  color: blue
+  icon: play-circle
 inputs:
   api_token:
-    description: 'API token'
+    description: API token
     required: true
   project_id:
-    description: 'Project ID'
+    description: Project ID
     required: true
-
   job_id:
-    description: 'Job ID'
+    description: Job ID
     required: true
-
   variables:
-    description: 'Additional environment variables'
+    description: Variables
     required: false
-
   api_url:
-    description: 'Refactr endpoint URL'
+    description: Refactr API base URL
     required: false
 runs:
-  using: 'node12'
-  main: 'dist/index.js'
+  using: node12
+  main: dist/index.js
