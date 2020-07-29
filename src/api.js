@@ -92,12 +92,12 @@ function checkStatus(
 			// Set output if provided.
 			const outputs = body && body.outputs;
 			if (outputs) {
-			    const keys = Object.keys(outputs);
+				const keys = Object.keys(outputs);
 
-			    for (const key of keys) {
-			        core.setOutput(key, outputs[key]);
-                }
-            }
+				for (const key of keys) {
+					core.setOutput(key, outputs[key]);
+				}
+			}
 
 			await delay(delayMs);
 			return await _checkStatus();

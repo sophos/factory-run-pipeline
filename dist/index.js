@@ -2636,6 +2636,7 @@ module.exports = options => {
 /***/ 378:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
+const core = __webpack_require__(470);
 const got = __webpack_require__(77);
 const { delay, peekMessage, normalizeUrl } = __webpack_require__(543);
 
@@ -2724,6 +2725,16 @@ function checkStatus(
 			const end = Date.now();
 			if (end - start >= timeout) {
 				throw new Error('Job is timeouted!');
+			}
+
+			// Set output if provided.
+			const outputs = body && body.outputs;
+			if (outputs) {
+				const keys = Object.keys(outputs);
+
+				for (const key of keys) {
+					core.setOutput(key, outputs[key]);
+				}
 			}
 
 			await delay(delayMs);
