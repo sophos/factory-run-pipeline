@@ -13,7 +13,8 @@ let _baseUrl;
 const setBaseUrl = (baseUrl) => _baseUrl = baseUrl;
 const getUrl = (fragment) => normalizeUrl(`${_baseUrl}/${fragment}`);
 const getHeaders = (authToken) => ({
-	Authorization: `Bearer ${authToken}`
+	Authorization: `Bearer ${authToken}`,
+	'Content-Type': 'application/json'
 });
 
 async function scheduleJob(authToken, projectId, jobId, variables) {
@@ -22,7 +23,6 @@ async function scheduleJob(authToken, projectId, jobId, variables) {
 			headers: getHeaders(authToken)
 		};
 		if (variables) {
-			req.headers['Content-Type'] = 'application/json';
 			req.json = {
 				variables
 			};
