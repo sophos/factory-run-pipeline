@@ -22,6 +22,7 @@ async function scheduleJob(authToken, projectId, jobId, variables) {
 			headers: getHeaders(authToken)
 		};
 		if (variables) {
+			req.headers['Content-Type'] = 'application/json';
 			req.json = {
 				variables
 			};
