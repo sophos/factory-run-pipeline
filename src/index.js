@@ -25,7 +25,11 @@ const DEFAULT_API_URL = 'https://api.refactr.it/';
 
 	let variables = {};
 	try {
-		variables = JSON.parse(core.getInput('variables') || {});
+		const inputVariables = core.getInput('variables');
+		if (inputVariables) {
+			variables = JSON.parse(inputVariables);
+		}
+
 		if (!isPOJO(variables)) {
 			return core.setFailed(
 				'Expected `variables` field to be JSON object!'
