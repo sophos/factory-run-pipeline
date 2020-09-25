@@ -13,18 +13,22 @@ let _baseUrl;
 const setBaseUrl = (baseUrl) => _baseUrl = baseUrl;
 const getUrl = (fragment) => normalizeUrl(`${_baseUrl}/${fragment}`);
 const getHeaders = (authToken) => ({
-	Authorization: `Bearer ${authToken}`
+	Authorization: `Bearer ${authToken}`,
+	'Content-Type': 'application/json'
 });
 
-async function scheduleJob(authToken, projectId, jobId, variables = {}) {
+async function scheduleJob(authToken, projectId, jobId, variables) {
 	try {
+		let req = {
+			headers: getHeaders(authToken)
+		};
+		if (variables) {
+			req.json = {
+				variables
+			};
+		}
 		const body = await got
-			.post(getUrl(`/v1/projects/${projectId}/jobs/${jobId}/run`), {
-				headers: getHeaders(authToken),
-				json: {
-					variables
-				}
-			})
+			.post(getUrl(`/v1/projects/${projectId}/jobs/${jobId}/run`), req)
 			.json();
 
 		return body['_id'];
