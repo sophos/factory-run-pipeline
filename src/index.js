@@ -23,16 +23,19 @@ const DEFAULT_API_URL = 'https://api.refactr.it/';
 		return core.setFailed('`job_id` must be non-empty ObjectID string!');
 	}
 
-	let variables = {};
-	try {
-		variables = JSON.parse(core.getInput('variables') || {});
+	let variables;
+	const inputVariables = core.getInput('variables');
+	if (inputVariables) {
+		try {
+			variables = JSON.parse(inputVariables);
+		} catch(err) {
+			return core.setFailed('Unable to jsonify variables!');
+		}
 		if (!isPOJO(variables)) {
 			return core.setFailed(
 				'Expected `variables` field to be JSON object!'
 			);
 		}
-	} catch(err) {
-		return core.setFailed('Unable to jsonify variables!');
 	}
 
 	setBaseUrl(core.getInput('api_url') || DEFAULT_API_URL);

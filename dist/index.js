@@ -2651,18 +2651,22 @@ let _baseUrl;
 const setBaseUrl = (baseUrl) => _baseUrl = baseUrl;
 const getUrl = (fragment) => normalizeUrl(`${_baseUrl}/${fragment}`);
 const getHeaders = (authToken) => ({
-	Authorization: `Bearer ${authToken}`
+	Authorization: `Bearer ${authToken}`,
+	'Content-Type': 'application/json'
 });
 
-async function scheduleJob(authToken, projectId, jobId, variables = {}) {
+async function scheduleJob(authToken, projectId, jobId, variables) {
 	try {
+		let req = {
+			headers: getHeaders(authToken)
+		};
+		if (variables) {
+			req.json = {
+				variables
+			};
+		}
 		const body = await got
-			.post(getUrl(`/v1/projects/${projectId}/jobs/${jobId}/run`), {
-				headers: getHeaders(authToken),
-				json: {
-					variables
-				}
-			})
+			.post(getUrl(`/v1/projects/${projectId}/jobs/${jobId}/run`), req)
 			.json();
 
 		return body['_id'];
@@ -5212,16 +5216,19 @@ const DEFAULT_API_URL = 'https://api.refactr.it/';
 		return core.setFailed('`job_id` must be non-empty ObjectID string!');
 	}
 
-	let variables = {};
-	try {
-		variables = JSON.parse(core.getInput('variables') || {});
+	let variables;
+	const inputVariables = core.getInput('variables');
+	if (inputVariables) {
+		try {
+			variables = JSON.parse(inputVariables);
+		} catch(err) {
+			return core.setFailed('Unable to jsonify variables!');
+		}
 		if (!isPOJO(variables)) {
 			return core.setFailed(
 				'Expected `variables` field to be JSON object!'
 			);
 		}
-	} catch(err) {
-		return core.setFailed('Unable to jsonify variables!');
 	}
 
 	setBaseUrl(core.getInput('api_url') || DEFAULT_API_URL);
