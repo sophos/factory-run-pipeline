@@ -170,7 +170,7 @@ exports.default = (url) => {
         href: url.href,
         path: `${url.pathname || ''}${url.search || ''}`
     };
-    if (is_1.default.string(url.port) && url.port.length !== 0) {
+    if (is_1.default.string(url.port) && url.port.length > 0) {
         options.port = Number(url.port);
     }
     if (url.username || url.password) {
@@ -234,32 +234,45 @@ module.exports = require("tls");
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const p_cancelable_1 = __webpack_require__(557);
-exports.CancelError = p_cancelable_1.CancelError;
+exports.CancelError = exports.ParseError = void 0;
 const core_1 = __webpack_require__(946);
-exports.RequestError = 
-// Errors to be exported
-core_1.RequestError;
-exports.MaxRedirectsError = core_1.MaxRedirectsError;
-exports.CacheError = core_1.CacheError;
-exports.UploadError = core_1.UploadError;
-exports.TimeoutError = core_1.TimeoutError;
-exports.HTTPError = core_1.HTTPError;
-exports.ReadError = core_1.ReadError;
-exports.UnsupportedProtocolError = core_1.UnsupportedProtocolError;
+/**
+An error to be thrown when server response code is 2xx, and parsing body fails.
+Includes a `response` property.
+*/
 class ParseError extends core_1.RequestError {
     constructor(error, response) {
         const { options } = response.request;
         super(`${error.message} in "${options.url.toString()}"`, error, response.request);
         this.name = 'ParseError';
-        Object.defineProperty(this, 'response', {
-            enumerable: false,
-            value: response
-        });
     }
 }
 exports.ParseError = ParseError;
+/**
+An error to be thrown when the request is aborted with `.cancel()`.
+*/
+class CancelError extends core_1.RequestError {
+    constructor(request) {
+        super('Promise was canceled', {}, request);
+        this.name = 'CancelError';
+    }
+    get isCanceled() {
+        return true;
+    }
+}
+exports.CancelError = CancelError;
+__exportStar(__webpack_require__(946), exports);
 
 
 /***/ }),
@@ -584,9 +597,16 @@ module.exports.default = normalizeUrl;
 
 "use strict";
 
-function __export(m) {
-    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
-}
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const url_1 = __webpack_require__(835);
 const create_1 = __webpack_require__(323);
@@ -689,11 +709,13 @@ const defaults = {
             filter: () => true,
             shouldContinue: () => true,
             countLimit: Infinity,
+            backoff: 0,
             requestLimit: 10000,
             stackAllItems: true
         },
         parseJson: (text) => JSON.parse(text),
-        stringifyJson: (object) => JSON.stringify(object)
+        stringifyJson: (object) => JSON.stringify(object),
+        cacheOptions: {}
     },
     handlers: [create_1.defaultHandler],
     mutableDefaults: false
@@ -703,9 +725,36 @@ exports.default = got;
 // For CommonJS default export support
 module.exports = got;
 module.exports.default = got;
-__export(__webpack_require__(323));
-__export(__webpack_require__(577));
+module.exports.__esModule = true; // Workaround for TS issue: https://github.com/sindresorhus/got/pull/1267
+__exportStar(__webpack_require__(323), exports);
+__exportStar(__webpack_require__(577), exports);
 
+
+/***/ }),
+
+/***/ 82:
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+// We use any as a valid input type
+/* eslint-disable @typescript-eslint/no-explicit-any */
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * Sanitizes an input into a string so it can be passed into issueCommand safely
+ * @param input input to sanitize into a string
+ */
+function toCommandValue(input) {
+    if (input === null || input === undefined) {
+        return '';
+    }
+    else if (typeof input === 'string' || input instanceof String) {
+        return input;
+    }
+    return JSON.stringify(input);
+}
+exports.toCommandValue = toCommandValue;
+//# sourceMappingURL=utils.js.map
 
 /***/ }),
 
@@ -794,6 +843,75 @@ class Response extends Readable {
 }
 
 module.exports = Response;
+
+
+/***/ }),
+
+/***/ 102:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+// For internal use, subject to change.
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+// We use any as a valid input type
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const fs = __importStar(__webpack_require__(747));
+const os = __importStar(__webpack_require__(87));
+const utils_1 = __webpack_require__(82);
+function issueCommand(command, message) {
+    const filePath = process.env[`GITHUB_${command}`];
+    if (!filePath) {
+        throw new Error(`Unable to find environment variable for file command ${command}`);
+    }
+    if (!fs.existsSync(filePath)) {
+        throw new Error(`Missing file at path: ${filePath}`);
+    }
+    fs.appendFileSync(filePath, `${utils_1.toCommandValue(message)}${os.EOL}`, {
+        encoding: 'utf8'
+    });
+}
+exports.issueCommand = issueCommand;
+//# sourceMappingURL=file-command.js.map
+
+/***/ }),
+
+/***/ 121:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const types_1 = __webpack_require__(36);
+const parseBody = (response, responseType, parseJson, encoding) => {
+    const { rawBody } = response;
+    try {
+        if (responseType === 'text') {
+            return rawBody.toString(encoding);
+        }
+        if (responseType === 'json') {
+            return rawBody.length === 0 ? '' : parseJson(rawBody.toString());
+        }
+        if (responseType === 'buffer') {
+            return rawBody;
+        }
+        throw new types_1.ParseError({
+            message: `Unknown body type '${responseType}'`,
+            name: 'Error'
+        }, response);
+    }
+    catch (error) {
+        throw new types_1.ParseError(error, response);
+    }
+};
+exports.default = parseBody;
 
 
 /***/ }),
@@ -1495,6 +1613,7 @@ const request = (url, options, callback) => {
 };
 
 const get = (url, options, callback) => {
+	// eslint-disable-next-line unicorn/prevent-abbreviations
 	const req = new ClientRequest(url, options, callback);
 	req.end();
 
@@ -1549,7 +1668,7 @@ const kOptions = Symbol('options');
 const kFlushedHeaders = Symbol('flushedHeaders');
 const kJobs = Symbol('jobs');
 
-const isValidHttpToken = /^[\^_`a-zA-Z\-0-9!#$%&'*+.|~]+$/;
+const isValidHttpToken = /^[\^`\-\w!#$%&*+.|~]+$/;
 const isInvalidHeaderValue = /[^\t\u0020-\u007E\u0080-\u00FF]/;
 
 class ClientRequest extends Writable {
@@ -1590,15 +1709,17 @@ class ClientRequest extends Writable {
 			throw new ERR_INVALID_ARG_TYPE('options.agent', ['Agent-like Object', 'undefined', 'false'], options.agent);
 		}
 
-		if (!options.port) {
-			options.port = options.defaultPort || (this.agent && this.agent.defaultPort) || 443;
-		}
-
-		options.host = options.hostname || options.host || 'localhost';
-
 		if (options.protocol && options.protocol !== 'https:') {
 			throw new ERR_INVALID_PROTOCOL(options.protocol, 'https:');
 		}
+
+		const port = options.port || options.defaultPort || (this.agent && this.agent.defaultPort) || 443;
+		const host = options.hostname || options.host || 'localhost';
+
+		// Don't enforce the origin via options. It may be changed in an Agent.
+		delete options.hostname;
+		delete options.host;
+		delete options.port;
 
 		const {timeout} = options;
 		options.timeout = undefined;
@@ -1632,22 +1753,19 @@ class ClientRequest extends Writable {
 		this[kOptions] = options;
 
 		// Clients that generate HTTP/2 requests directly SHOULD use the :authority pseudo-header field instead of the Host header field.
-		// What about IPv6? Square brackets?
-		if (options.port === 443) {
-			options.origin = `https://${options.host}`;
+		if (port === 443) {
+			this[kOrigin] = `https://${host}`;
 
 			if (!(':authority' in this[kHeaders])) {
-				this[kHeaders][':authority'] = options.host;
+				this[kHeaders][':authority'] = host;
 			}
 		} else {
-			options.origin = `https://${options.host}:${options.port}`;
+			this[kOrigin] = `https://${host}:${port}`;
 
 			if (!(':authority' in this[kHeaders])) {
-				this[kHeaders][':authority'] = `${options.host}:${options.port}`;
+				this[kHeaders][':authority'] = `${host}:${port}`;
 			}
 		}
-
-		this[kOrigin] = options;
 
 		if (timeout) {
 			this.setTimeout(timeout);
@@ -1688,6 +1806,7 @@ class ClientRequest extends Writable {
 		// https://github.com/nodejs/node/blob/654df09ae0c5e17d1b52a900a545f0664d8c7627/lib/internal/http2/util.js#L148-L156
 		if (this._mustNotHaveABody) {
 			callback(new Error('The GET, HEAD and DELETE methods must NOT have a body'));
+			/* istanbul ignore next: Node.js 12 throws directly */
 			return;
 		}
 
@@ -1774,8 +1893,22 @@ class ClientRequest extends Writable {
 				proxyEvents(stream, this, ['timeout', 'continue', 'close', 'error']);
 			}
 
+			// Wait for the `finish` event. We don't want to emit the `response` event
+			// before `request.end()` is called.
+			const waitForEnd = fn => {
+				return (...args) => {
+					if (!this.writable && !this.destroyed) {
+						fn(...args);
+					} else {
+						this.once('finish', () => {
+							fn(...args);
+						});
+					}
+				};
+			};
+
 			// This event tells we are ready to listen for the data.
-			stream.once('response', (headers, flags, rawHeaders) => {
+			stream.once('response', waitForEnd((headers, flags, rawHeaders) => {
 				// If we were to emit raw request stream, it would be as fast as the native approach.
 				// Note that wrapping the raw stream in a Proxy instance won't improve the performance (already tested it).
 				const response = new IncomingMessage(this.socket, stream.readableHighWaterMark);
@@ -1827,18 +1960,20 @@ class ClientRequest extends Writable {
 						response._dump();
 					}
 				}
-			});
+			}));
 
 			// Emits `information` event
-			stream.once('headers', headers => this.emit('information', {statusCode: headers[HTTP2_HEADER_STATUS]}));
+			stream.once('headers', waitForEnd(
+				headers => this.emit('information', {statusCode: headers[HTTP2_HEADER_STATUS]})
+			));
 
-			stream.once('trailers', (trailers, flags, rawTrailers) => {
+			stream.once('trailers', waitForEnd((trailers, flags, rawTrailers) => {
 				const {res} = this;
 
 				// Assigns trailers to the response object.
 				res.trailers = trailers;
 				res.rawTrailers = rawTrailers;
-			});
+			}));
 
 			const {socket} = stream.session;
 			this.socket = socket;
@@ -1963,7 +2098,7 @@ exports.default = (message) => {
         return;
     }
     alreadyWarned.add(message);
-    // @ts-ignore Missing types.
+    // @ts-expect-error Missing types.
     process.emitWarning(`Got: ${message}`, {
         type: 'DeprecationWarning'
     });
@@ -2210,6 +2345,13 @@ exports.default = deepFreeze;
 
 /***/ }),
 
+/***/ 293:
+/***/ (function(module) {
+
+module.exports = require("buffer");
+
+/***/ }),
+
 /***/ 303:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -2334,8 +2476,18 @@ module.exports = Keyv;
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const p_cancelable_1 = __webpack_require__(557);
+exports.defaultHandler = void 0;
 const is_1 = __webpack_require__(534);
 const as_promise_1 = __webpack_require__(577);
 const create_rejection_1 = __webpack_require__(910);
@@ -2349,12 +2501,23 @@ const errors = {
     MaxRedirectsError: as_promise_1.MaxRedirectsError,
     TimeoutError: as_promise_1.TimeoutError,
     ParseError: as_promise_1.ParseError,
-    CancelError: p_cancelable_1.CancelError,
+    CancelError: as_promise_1.CancelError,
     UnsupportedProtocolError: as_promise_1.UnsupportedProtocolError,
     UploadError: as_promise_1.UploadError
 };
-const { normalizeArguments, mergeOptions } = as_promise_1.PromisableRequest;
-const getPromiseOrStream = (options) => options.isStream ? new core_1.default(options.url, options) : as_promise_1.default(options);
+// The `delay` package weighs 10KB (!)
+const delay = async (ms) => new Promise(resolve => {
+    setTimeout(resolve, ms);
+});
+const { normalizeArguments } = core_1.default;
+const mergeOptions = (...sources) => {
+    let mergedOptions;
+    for (const source of sources) {
+        mergedOptions = normalizeArguments(undefined, source, mergedOptions);
+    }
+    return mergedOptions;
+};
+const getPromiseOrStream = (options) => options.isStream ? new core_1.default(undefined, options) : as_promise_1.default(options);
 const isGotInstance = (value) => ('defaults' in value && 'options' in value.defaults);
 const aliases = [
     'get',
@@ -2396,13 +2559,13 @@ const create = (defaults) => {
         return result;
     }));
     // Got interface
-    const got = ((url, options) => {
+    const got = ((url, options = {}, _defaults) => {
         var _a, _b;
         let iteration = 0;
         const iterateHandlers = (newOptions) => {
             return defaults.handlers[iteration++](newOptions, iteration === defaults.handlers.length ? getPromiseOrStream : iterateHandlers);
         };
-        // TODO: remove this in Got 12
+        // TODO: Remove this in Got 12.
         if (is_1.default.plainObject(url)) {
             const mergedOptions = {
                 ...url,
@@ -2417,13 +2580,13 @@ const create = (defaults) => {
             let initHookError;
             try {
                 callInitHooks(defaults.options.hooks.init, options);
-                callInitHooks((_a = options === null || options === void 0 ? void 0 : options.hooks) === null || _a === void 0 ? void 0 : _a.init, options);
+                callInitHooks((_a = options.hooks) === null || _a === void 0 ? void 0 : _a.init, options);
             }
             catch (error) {
                 initHookError = error;
             }
             // Normalize options & call handlers
-            const normalizedOptions = normalizeArguments(url, options, defaults.options);
+            const normalizedOptions = normalizeArguments(url, options, _defaults !== null && _defaults !== void 0 ? _defaults : defaults.options);
             normalizedOptions[core_1.kIsNormalizedAlready] = true;
             if (initHookError) {
                 throw new as_promise_1.RequestError(initHookError.message, initHookError, normalizedOptions);
@@ -2431,11 +2594,11 @@ const create = (defaults) => {
             return iterateHandlers(normalizedOptions);
         }
         catch (error) {
-            if (options === null || options === void 0 ? void 0 : options.isStream) {
+            if (options.isStream) {
                 throw error;
             }
             else {
-                return create_rejection_1.default(error, defaults.options.hooks.beforeError, (_b = options === null || options === void 0 ? void 0 : options.hooks) === null || _b === void 0 ? void 0 : _b.beforeError);
+                return create_rejection_1.default(error, defaults.options.hooks.beforeError, (_b = options.hooks) === null || _b === void 0 ? void 0 : _b.beforeError);
             }
         }
     });
@@ -2469,6 +2632,9 @@ const create = (defaults) => {
     };
     // Pagination
     const paginateEach = (async function* (url, options) {
+        // TODO: Remove this `@ts-expect-error` when upgrading to TypeScript 4.
+        // Error: Argument of type 'Merge<Options, PaginationOptions<T, R>> | undefined' is not assignable to parameter of type 'Options | undefined'.
+        // @ts-expect-error
         let normalizedOptions = normalizeArguments(url, options, defaults.options);
         normalizedOptions.resolveBodyOnly = false;
         const pagination = normalizedOptions.pagination;
@@ -2479,9 +2645,14 @@ const create = (defaults) => {
         let { countLimit } = pagination;
         let numberOfRequests = 0;
         while (numberOfRequests < pagination.requestLimit) {
+            if (numberOfRequests !== 0) {
+                // eslint-disable-next-line no-await-in-loop
+                await delay(pagination.backoff);
+            }
+            // @ts-expect-error FIXME!
             // TODO: Throw when result is not an instance of Response
             // eslint-disable-next-line no-await-in-loop
-            const result = (await got(normalizedOptions));
+            const result = (await got(undefined, undefined, normalizedOptions));
             // eslint-disable-next-line no-await-in-loop
             const parsed = await pagination.transform(result);
             const current = [];
@@ -2513,12 +2684,10 @@ const create = (defaults) => {
             numberOfRequests++;
         }
     });
-    got.paginate = ((url, options) => {
-        return paginateEach(url, options);
-    });
+    got.paginate = paginateEach;
     got.paginate.all = (async (url, options) => {
         const results = [];
-        for await (const item of got.paginate(url, options)) {
+        for await (const item of paginateEach(url, options)) {
             results.push(item);
         }
         return results;
@@ -2534,16 +2703,18 @@ const create = (defaults) => {
             return got(url, { ...options, method, isStream: true });
         });
     }
-    Object.assign(got, { ...errors, mergeOptions });
+    Object.assign(got, errors);
     Object.defineProperty(got, 'defaults', {
         value: defaults.mutableDefaults ? defaults : deep_freeze_1.default(defaults),
         writable: defaults.mutableDefaults,
         configurable: defaults.mutableDefaults,
         enumerable: true
     });
+    got.mergeOptions = mergeOptions;
     return got;
 };
 exports.default = create;
+__exportStar(__webpack_require__(839), exports);
 
 
 /***/ }),
@@ -3011,6 +3182,22 @@ module.exports = require("stream");
 
 /***/ }),
 
+/***/ 422:
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.isResponseOk = void 0;
+exports.isResponseOk = (response) => {
+    const { statusCode } = response;
+    const limitStatusCode = response.request.options.followRedirect ? 299 : 399;
+    return (statusCode >= 200 && statusCode <= limitStatusCode) || statusCode === 304;
+};
+
+
+/***/ }),
+
 /***/ 431:
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -3025,6 +3212,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const os = __importStar(__webpack_require__(87));
+const utils_1 = __webpack_require__(82);
 /**
  * Commands
  *
@@ -3078,28 +3266,14 @@ class Command {
         return cmdStr;
     }
 }
-/**
- * Sanitizes an input into a string so it can be passed into issueCommand safely
- * @param input input to sanitize into a string
- */
-function toCommandValue(input) {
-    if (input === null || input === undefined) {
-        return '';
-    }
-    else if (typeof input === 'string' || input instanceof String) {
-        return input;
-    }
-    return JSON.stringify(input);
-}
-exports.toCommandValue = toCommandValue;
 function escapeData(s) {
-    return toCommandValue(s)
+    return utils_1.toCommandValue(s)
         .replace(/%/g, '%25')
         .replace(/\r/g, '%0D')
         .replace(/\n/g, '%0A');
 }
 function escapeProperty(s) {
-    return toCommandValue(s)
+    return utils_1.toCommandValue(s)
         .replace(/%/g, '%25')
         .replace(/\r/g, '%0D')
         .replace(/\n/g, '%0A')
@@ -3235,138 +3409,6 @@ exports.default = (body) => is_1.default.nodeStream(body) && is_1.default.functi
 
 /***/ }),
 
-/***/ 468:
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const is_1 = __webpack_require__(534);
-const types_1 = __webpack_require__(36);
-const core_1 = __webpack_require__(946);
-if (!core_1.knownHookEvents.includes('beforeRetry')) {
-    core_1.knownHookEvents.push('beforeRetry', 'afterResponse');
-}
-exports.knownBodyTypes = ['json', 'buffer', 'text'];
-// @ts-ignore The error is: Not all code paths return a value.
-exports.parseBody = (response, responseType, parseJson, encoding) => {
-    const { rawBody } = response;
-    try {
-        if (responseType === 'text') {
-            return rawBody.toString(encoding);
-        }
-        if (responseType === 'json') {
-            return rawBody.length === 0 ? '' : parseJson(rawBody.toString());
-        }
-        if (responseType === 'buffer') {
-            return Buffer.from(rawBody);
-        }
-        throw new types_1.ParseError({
-            message: `Unknown body type '${responseType}'`,
-            name: 'Error'
-        }, response);
-    }
-    catch (error) {
-        throw new types_1.ParseError(error, response);
-    }
-};
-class PromisableRequest extends core_1.default {
-    static normalizeArguments(url, nonNormalizedOptions, defaults) {
-        const options = super.normalizeArguments(url, nonNormalizedOptions, defaults);
-        if (is_1.default.null_(options.encoding)) {
-            throw new TypeError('To get a Buffer, set `options.responseType` to `buffer` instead');
-        }
-        is_1.assert.any([is_1.default.string, is_1.default.undefined], options.encoding);
-        is_1.assert.any([is_1.default.boolean, is_1.default.undefined], options.resolveBodyOnly);
-        is_1.assert.any([is_1.default.boolean, is_1.default.undefined], options.methodRewriting);
-        is_1.assert.any([is_1.default.boolean, is_1.default.undefined], options.isStream);
-        is_1.assert.any([is_1.default.string, is_1.default.undefined], options.responseType);
-        // `options.responseType`
-        if (options.responseType === undefined) {
-            options.responseType = 'text';
-        }
-        // `options.retry`
-        const { retry } = options;
-        if (defaults) {
-            options.retry = { ...defaults.retry };
-        }
-        else {
-            options.retry = {
-                calculateDelay: retryObject => retryObject.computedValue,
-                limit: 0,
-                methods: [],
-                statusCodes: [],
-                errorCodes: [],
-                maxRetryAfter: undefined
-            };
-        }
-        if (is_1.default.object(retry)) {
-            options.retry = {
-                ...options.retry,
-                ...retry
-            };
-            options.retry.methods = [...new Set(options.retry.methods.map(method => method.toUpperCase()))];
-            options.retry.statusCodes = [...new Set(options.retry.statusCodes)];
-            options.retry.errorCodes = [...new Set(options.retry.errorCodes)];
-        }
-        else if (is_1.default.number(retry)) {
-            options.retry.limit = retry;
-        }
-        if (is_1.default.undefined(options.retry.maxRetryAfter)) {
-            options.retry.maxRetryAfter = Math.min(...[options.timeout.request, options.timeout.connect].filter(is_1.default.number));
-        }
-        // `options.pagination`
-        if (is_1.default.object(options.pagination)) {
-            if (defaults) {
-                options.pagination = {
-                    ...defaults.pagination,
-                    ...options.pagination
-                };
-            }
-            const { pagination } = options;
-            if (!is_1.default.function_(pagination.transform)) {
-                throw new Error('`options.pagination.transform` must be implemented');
-            }
-            if (!is_1.default.function_(pagination.shouldContinue)) {
-                throw new Error('`options.pagination.shouldContinue` must be implemented');
-            }
-            if (!is_1.default.function_(pagination.filter)) {
-                throw new TypeError('`options.pagination.filter` must be implemented');
-            }
-            if (!is_1.default.function_(pagination.paginate)) {
-                throw new Error('`options.pagination.paginate` must be implemented');
-            }
-        }
-        // JSON mode
-        if (options.responseType === 'json' && options.headers.accept === undefined) {
-            options.headers.accept = 'application/json';
-        }
-        return options;
-    }
-    static mergeOptions(...sources) {
-        let mergedOptions;
-        for (const source of sources) {
-            mergedOptions = PromisableRequest.normalizeArguments(undefined, source, mergedOptions);
-        }
-        return mergedOptions;
-    }
-    async _beforeError(error) {
-        if (this.destroyed) {
-            return;
-        }
-        if (!(error instanceof core_1.RequestError)) {
-            error = new core_1.RequestError(error.message, error, this);
-        }
-        // Let the promise decide whether to abort or not
-        // It is also responsible for the `beforeError` hook
-        this.emit('error', error);
-    }
-}
-exports.default = PromisableRequest;
-
-
-/***/ }),
-
 /***/ 470:
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
@@ -3390,6 +3432,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const command_1 = __webpack_require__(431);
+const file_command_1 = __webpack_require__(102);
+const utils_1 = __webpack_require__(82);
 const os = __importStar(__webpack_require__(87));
 const path = __importStar(__webpack_require__(622));
 /**
@@ -3416,9 +3460,17 @@ var ExitCode;
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function exportVariable(name, val) {
-    const convertedVal = command_1.toCommandValue(val);
+    const convertedVal = utils_1.toCommandValue(val);
     process.env[name] = convertedVal;
-    command_1.issueCommand('set-env', { name }, convertedVal);
+    const filePath = process.env['GITHUB_ENV'] || '';
+    if (filePath) {
+        const delimiter = '_GitHubActionsFileCommandDelimeter_';
+        const commandValue = `${name}<<${delimiter}${os.EOL}${convertedVal}${os.EOL}${delimiter}`;
+        file_command_1.issueCommand('ENV', commandValue);
+    }
+    else {
+        command_1.issueCommand('set-env', { name }, convertedVal);
+    }
 }
 exports.exportVariable = exportVariable;
 /**
@@ -3434,7 +3486,13 @@ exports.setSecret = setSecret;
  * @param inputPath
  */
 function addPath(inputPath) {
-    command_1.issueCommand('add-path', {}, inputPath);
+    const filePath = process.env['GITHUB_PATH'] || '';
+    if (filePath) {
+        file_command_1.issueCommand('PATH', inputPath);
+    }
+    else {
+        command_1.issueCommand('add-path', {}, inputPath);
+    }
     process.env['PATH'] = `${inputPath}${path.delimiter}${process.env['PATH']}`;
 }
 exports.addPath = addPath;
@@ -3805,49 +3863,108 @@ module.exports = (options = {}) => new Promise((resolve, reject) => {
 /// <reference lib="dom"/>
 /// <reference types="node"/>
 Object.defineProperty(exports, "__esModule", { value: true });
+const typedArrayTypeNames = [
+    'Int8Array',
+    'Uint8Array',
+    'Uint8ClampedArray',
+    'Int16Array',
+    'Uint16Array',
+    'Int32Array',
+    'Uint32Array',
+    'Float32Array',
+    'Float64Array',
+    'BigInt64Array',
+    'BigUint64Array'
+];
+function isTypedArrayName(name) {
+    return typedArrayTypeNames.includes(name);
+}
+const objectTypeNames = [
+    'Function',
+    'Generator',
+    'AsyncGenerator',
+    'GeneratorFunction',
+    'AsyncGeneratorFunction',
+    'AsyncFunction',
+    'Observable',
+    'Array',
+    'Buffer',
+    'Object',
+    'RegExp',
+    'Date',
+    'Error',
+    'Map',
+    'Set',
+    'WeakMap',
+    'WeakSet',
+    'ArrayBuffer',
+    'SharedArrayBuffer',
+    'DataView',
+    'Promise',
+    'URL',
+    'HTMLElement',
+    ...typedArrayTypeNames
+];
+function isObjectTypeName(name) {
+    return objectTypeNames.includes(name);
+}
+const primitiveTypeNames = [
+    'null',
+    'undefined',
+    'string',
+    'number',
+    'bigint',
+    'boolean',
+    'symbol'
+];
+function isPrimitiveTypeName(name) {
+    return primitiveTypeNames.includes(name);
+}
+// eslint-disable-next-line @typescript-eslint/ban-types
+function isOfType(type) {
+    return (value) => typeof value === type;
+}
 const { toString } = Object.prototype;
-const isOfType = (type) => (value) => typeof value === type;
 const getObjectType = (value) => {
-    const objectName = toString.call(value).slice(8, -1);
-    if (objectName) {
-        return objectName;
+    const objectTypeName = toString.call(value).slice(8, -1);
+    if (/HTML\w+Element/.test(objectTypeName) && is.domElement(value)) {
+        return 'HTMLElement';
+    }
+    if (isObjectTypeName(objectTypeName)) {
+        return objectTypeName;
     }
     return undefined;
 };
 const isObjectOfType = (type) => (value) => getObjectType(value) === type;
 function is(value) {
-    switch (value) {
-        case null:
-            return "null" /* null */;
-        case true:
-        case false:
-            return "boolean" /* boolean */;
-        default:
+    if (value === null) {
+        return 'null';
     }
     switch (typeof value) {
         case 'undefined':
-            return "undefined" /* undefined */;
+            return 'undefined';
         case 'string':
-            return "string" /* string */;
+            return 'string';
         case 'number':
-            return "number" /* number */;
+            return 'number';
+        case 'boolean':
+            return 'boolean';
+        case 'function':
+            return 'Function';
         case 'bigint':
-            return "bigint" /* bigint */;
+            return 'bigint';
         case 'symbol':
-            return "symbol" /* symbol */;
+            return 'symbol';
         default:
     }
-    if (is.function_(value)) {
-        return "Function" /* Function */;
-    }
     if (is.observable(value)) {
-        return "Observable" /* Observable */;
+        return 'Observable';
     }
     if (is.array(value)) {
-        return "Array" /* Array */;
+        return 'Array';
     }
     if (is.buffer(value)) {
-        return "Buffer" /* Buffer */;
+        return 'Buffer';
     }
     const tagType = getObjectType(value);
     if (tagType) {
@@ -3856,7 +3973,7 @@ function is(value) {
     if (value instanceof String || value instanceof Boolean || value instanceof Number) {
         throw new TypeError('Please don\'t use object wrappers for primitive types');
     }
-    return "Object" /* Object */;
+    return 'Object';
 }
 is.undefined = isOfType('undefined');
 is.string = isOfType('string');
@@ -3870,7 +3987,15 @@ is.class_ = (value) => is.function_(value) && value.toString().startsWith('class
 is.boolean = (value) => value === true || value === false;
 is.symbol = isOfType('symbol');
 is.numericString = (value) => is.string(value) && !is.emptyStringOrWhitespace(value) && !Number.isNaN(Number(value));
-is.array = Array.isArray;
+is.array = (value, assertion) => {
+    if (!Array.isArray(value)) {
+        return false;
+    }
+    if (!is.function_(assertion)) {
+        return true;
+    }
+    return value.every(assertion);
+};
 is.buffer = (value) => { var _a, _b, _c, _d; return (_d = (_c = (_b = (_a = value) === null || _a === void 0 ? void 0 : _a.constructor) === null || _b === void 0 ? void 0 : _b.isBuffer) === null || _c === void 0 ? void 0 : _c.call(_b, value)) !== null && _d !== void 0 ? _d : false; };
 is.nullOrUndefined = (value) => is.null_(value) || is.undefined(value);
 is.object = (value) => !is.null_(value) && (typeof value === 'object' || is.function_(value));
@@ -3878,41 +4003,41 @@ is.iterable = (value) => { var _a; return is.function_((_a = value) === null || 
 is.asyncIterable = (value) => { var _a; return is.function_((_a = value) === null || _a === void 0 ? void 0 : _a[Symbol.asyncIterator]); };
 is.generator = (value) => is.iterable(value) && is.function_(value.next) && is.function_(value.throw);
 is.asyncGenerator = (value) => is.asyncIterable(value) && is.function_(value.next) && is.function_(value.throw);
-is.nativePromise = (value) => isObjectOfType("Promise" /* Promise */)(value);
+is.nativePromise = (value) => isObjectOfType('Promise')(value);
 const hasPromiseAPI = (value) => {
     var _a, _b;
     return is.function_((_a = value) === null || _a === void 0 ? void 0 : _a.then) &&
         is.function_((_b = value) === null || _b === void 0 ? void 0 : _b.catch);
 };
 is.promise = (value) => is.nativePromise(value) || hasPromiseAPI(value);
-is.generatorFunction = isObjectOfType("GeneratorFunction" /* GeneratorFunction */);
-is.asyncGeneratorFunction = (value) => getObjectType(value) === "AsyncGeneratorFunction" /* AsyncGeneratorFunction */;
-is.asyncFunction = (value) => getObjectType(value) === "AsyncFunction" /* AsyncFunction */;
+is.generatorFunction = isObjectOfType('GeneratorFunction');
+is.asyncGeneratorFunction = (value) => getObjectType(value) === 'AsyncGeneratorFunction';
+is.asyncFunction = (value) => getObjectType(value) === 'AsyncFunction';
 // eslint-disable-next-line no-prototype-builtins, @typescript-eslint/ban-types
 is.boundFunction = (value) => is.function_(value) && !value.hasOwnProperty('prototype');
-is.regExp = isObjectOfType("RegExp" /* RegExp */);
-is.date = isObjectOfType("Date" /* Date */);
-is.error = isObjectOfType("Error" /* Error */);
-is.map = (value) => isObjectOfType("Map" /* Map */)(value);
-is.set = (value) => isObjectOfType("Set" /* Set */)(value);
-is.weakMap = (value) => isObjectOfType("WeakMap" /* WeakMap */)(value);
-is.weakSet = (value) => isObjectOfType("WeakSet" /* WeakSet */)(value);
-is.int8Array = isObjectOfType("Int8Array" /* Int8Array */);
-is.uint8Array = isObjectOfType("Uint8Array" /* Uint8Array */);
-is.uint8ClampedArray = isObjectOfType("Uint8ClampedArray" /* Uint8ClampedArray */);
-is.int16Array = isObjectOfType("Int16Array" /* Int16Array */);
-is.uint16Array = isObjectOfType("Uint16Array" /* Uint16Array */);
-is.int32Array = isObjectOfType("Int32Array" /* Int32Array */);
-is.uint32Array = isObjectOfType("Uint32Array" /* Uint32Array */);
-is.float32Array = isObjectOfType("Float32Array" /* Float32Array */);
-is.float64Array = isObjectOfType("Float64Array" /* Float64Array */);
-is.bigInt64Array = isObjectOfType("BigInt64Array" /* BigInt64Array */);
-is.bigUint64Array = isObjectOfType("BigUint64Array" /* BigUint64Array */);
-is.arrayBuffer = isObjectOfType("ArrayBuffer" /* ArrayBuffer */);
-is.sharedArrayBuffer = isObjectOfType("SharedArrayBuffer" /* SharedArrayBuffer */);
-is.dataView = isObjectOfType("DataView" /* DataView */);
+is.regExp = isObjectOfType('RegExp');
+is.date = isObjectOfType('Date');
+is.error = isObjectOfType('Error');
+is.map = (value) => isObjectOfType('Map')(value);
+is.set = (value) => isObjectOfType('Set')(value);
+is.weakMap = (value) => isObjectOfType('WeakMap')(value);
+is.weakSet = (value) => isObjectOfType('WeakSet')(value);
+is.int8Array = isObjectOfType('Int8Array');
+is.uint8Array = isObjectOfType('Uint8Array');
+is.uint8ClampedArray = isObjectOfType('Uint8ClampedArray');
+is.int16Array = isObjectOfType('Int16Array');
+is.uint16Array = isObjectOfType('Uint16Array');
+is.int32Array = isObjectOfType('Int32Array');
+is.uint32Array = isObjectOfType('Uint32Array');
+is.float32Array = isObjectOfType('Float32Array');
+is.float64Array = isObjectOfType('Float64Array');
+is.bigInt64Array = isObjectOfType('BigInt64Array');
+is.bigUint64Array = isObjectOfType('BigUint64Array');
+is.arrayBuffer = isObjectOfType('ArrayBuffer');
+is.sharedArrayBuffer = isObjectOfType('SharedArrayBuffer');
+is.dataView = isObjectOfType('DataView');
 is.directInstanceOf = (instance, class_) => Object.getPrototypeOf(instance) === class_.prototype;
-is.urlInstance = (value) => isObjectOfType("URL" /* URL */)(value);
+is.urlInstance = (value) => isObjectOfType('URL')(value);
 is.urlString = (value) => {
     if (!is.string(value)) {
         return false;
@@ -3931,45 +4056,18 @@ is.truthy = (value) => Boolean(value);
 // Example: `is.falsy = (value: unknown): value is (not true | 0 | '' | undefined | null) => Boolean(value);`
 is.falsy = (value) => !value;
 is.nan = (value) => Number.isNaN(value);
-const primitiveTypeOfTypes = new Set([
-    'undefined',
-    'string',
-    'number',
-    'bigint',
-    'boolean',
-    'symbol'
-]);
-is.primitive = (value) => is.null_(value) || primitiveTypeOfTypes.has(typeof value);
+is.primitive = (value) => is.null_(value) || isPrimitiveTypeName(typeof value);
 is.integer = (value) => Number.isInteger(value);
 is.safeInteger = (value) => Number.isSafeInteger(value);
 is.plainObject = (value) => {
     // From: https://github.com/sindresorhus/is-plain-obj/blob/master/index.js
-    if (getObjectType(value) !== "Object" /* Object */) {
+    if (toString.call(value) !== '[object Object]') {
         return false;
     }
     const prototype = Object.getPrototypeOf(value);
     return prototype === null || prototype === Object.getPrototypeOf({});
 };
-const typedArrayTypes = new Set([
-    "Int8Array" /* Int8Array */,
-    "Uint8Array" /* Uint8Array */,
-    "Uint8ClampedArray" /* Uint8ClampedArray */,
-    "Int16Array" /* Int16Array */,
-    "Uint16Array" /* Uint16Array */,
-    "Int32Array" /* Int32Array */,
-    "Uint32Array" /* Uint32Array */,
-    "Float32Array" /* Float32Array */,
-    "Float64Array" /* Float64Array */,
-    "BigInt64Array" /* BigInt64Array */,
-    "BigUint64Array" /* BigUint64Array */
-]);
-is.typedArray = (value) => {
-    const objectType = getObjectType(value);
-    if (objectType === undefined) {
-        return false;
-    }
-    return typedArrayTypes.has(objectType);
-};
+is.typedArray = (value) => isTypedArrayName(getObjectType(value));
 const isValidLength = (value) => is.safeInteger(value) && value >= 0;
 is.arrayLike = (value) => !is.nullOrUndefined(value) && !is.function_(value) && isValidLength(value.length);
 is.inRange = (value, range) => {
@@ -3989,8 +4087,13 @@ const DOM_PROPERTIES_TO_CHECK = [
     'attributes',
     'nodeValue'
 ];
-is.domElement = (value) => is.object(value) && value.nodeType === NODE_TYPE_ELEMENT && is.string(value.nodeName) &&
-    !is.plainObject(value) && DOM_PROPERTIES_TO_CHECK.every(property => property in value);
+is.domElement = (value) => {
+    return is.object(value) &&
+        value.nodeType === NODE_TYPE_ELEMENT &&
+        is.string(value.nodeName) &&
+        !is.plainObject(value) &&
+        DOM_PROPERTIES_TO_CHECK.every(property => property in value);
+};
 is.observable = (value) => {
     var _a, _b, _c, _d;
     if (!value) {
@@ -4046,55 +4149,61 @@ const assertType = (condition, description, value) => {
 };
 exports.assert = {
     // Unknowns.
-    undefined: (value) => assertType(is.undefined(value), "undefined" /* undefined */, value),
-    string: (value) => assertType(is.string(value), "string" /* string */, value),
-    number: (value) => assertType(is.number(value), "number" /* number */, value),
-    bigint: (value) => assertType(is.bigint(value), "bigint" /* bigint */, value),
+    undefined: (value) => assertType(is.undefined(value), 'undefined', value),
+    string: (value) => assertType(is.string(value), 'string', value),
+    number: (value) => assertType(is.number(value), 'number', value),
+    bigint: (value) => assertType(is.bigint(value), 'bigint', value),
     // eslint-disable-next-line @typescript-eslint/ban-types
-    function_: (value) => assertType(is.function_(value), "Function" /* Function */, value),
-    null_: (value) => assertType(is.null_(value), "null" /* null */, value),
+    function_: (value) => assertType(is.function_(value), 'Function', value),
+    null_: (value) => assertType(is.null_(value), 'null', value),
     class_: (value) => assertType(is.class_(value), "Class" /* class_ */, value),
-    boolean: (value) => assertType(is.boolean(value), "boolean" /* boolean */, value),
-    symbol: (value) => assertType(is.symbol(value), "symbol" /* symbol */, value),
+    boolean: (value) => assertType(is.boolean(value), 'boolean', value),
+    symbol: (value) => assertType(is.symbol(value), 'symbol', value),
     numericString: (value) => assertType(is.numericString(value), "string with a number" /* numericString */, value),
-    array: (value) => assertType(is.array(value), "Array" /* Array */, value),
-    buffer: (value) => assertType(is.buffer(value), "Buffer" /* Buffer */, value),
+    array: (value, assertion) => {
+        const assert = assertType;
+        assert(is.array(value), 'Array', value);
+        if (assertion) {
+            value.forEach(assertion);
+        }
+    },
+    buffer: (value) => assertType(is.buffer(value), 'Buffer', value),
     nullOrUndefined: (value) => assertType(is.nullOrUndefined(value), "null or undefined" /* nullOrUndefined */, value),
-    object: (value) => assertType(is.object(value), "Object" /* Object */, value),
+    object: (value) => assertType(is.object(value), 'Object', value),
     iterable: (value) => assertType(is.iterable(value), "Iterable" /* iterable */, value),
     asyncIterable: (value) => assertType(is.asyncIterable(value), "AsyncIterable" /* asyncIterable */, value),
-    generator: (value) => assertType(is.generator(value), "Generator" /* Generator */, value),
-    asyncGenerator: (value) => assertType(is.asyncGenerator(value), "AsyncGenerator" /* AsyncGenerator */, value),
+    generator: (value) => assertType(is.generator(value), 'Generator', value),
+    asyncGenerator: (value) => assertType(is.asyncGenerator(value), 'AsyncGenerator', value),
     nativePromise: (value) => assertType(is.nativePromise(value), "native Promise" /* nativePromise */, value),
-    promise: (value) => assertType(is.promise(value), "Promise" /* Promise */, value),
-    generatorFunction: (value) => assertType(is.generatorFunction(value), "GeneratorFunction" /* GeneratorFunction */, value),
-    asyncGeneratorFunction: (value) => assertType(is.asyncGeneratorFunction(value), "AsyncGeneratorFunction" /* AsyncGeneratorFunction */, value),
+    promise: (value) => assertType(is.promise(value), 'Promise', value),
+    generatorFunction: (value) => assertType(is.generatorFunction(value), 'GeneratorFunction', value),
+    asyncGeneratorFunction: (value) => assertType(is.asyncGeneratorFunction(value), 'AsyncGeneratorFunction', value),
     // eslint-disable-next-line @typescript-eslint/ban-types
-    asyncFunction: (value) => assertType(is.asyncFunction(value), "AsyncFunction" /* AsyncFunction */, value),
+    asyncFunction: (value) => assertType(is.asyncFunction(value), 'AsyncFunction', value),
     // eslint-disable-next-line @typescript-eslint/ban-types
-    boundFunction: (value) => assertType(is.boundFunction(value), "Function" /* Function */, value),
-    regExp: (value) => assertType(is.regExp(value), "RegExp" /* RegExp */, value),
-    date: (value) => assertType(is.date(value), "Date" /* Date */, value),
-    error: (value) => assertType(is.error(value), "Error" /* Error */, value),
-    map: (value) => assertType(is.map(value), "Map" /* Map */, value),
-    set: (value) => assertType(is.set(value), "Set" /* Set */, value),
-    weakMap: (value) => assertType(is.weakMap(value), "WeakMap" /* WeakMap */, value),
-    weakSet: (value) => assertType(is.weakSet(value), "WeakSet" /* WeakSet */, value),
-    int8Array: (value) => assertType(is.int8Array(value), "Int8Array" /* Int8Array */, value),
-    uint8Array: (value) => assertType(is.uint8Array(value), "Uint8Array" /* Uint8Array */, value),
-    uint8ClampedArray: (value) => assertType(is.uint8ClampedArray(value), "Uint8ClampedArray" /* Uint8ClampedArray */, value),
-    int16Array: (value) => assertType(is.int16Array(value), "Int16Array" /* Int16Array */, value),
-    uint16Array: (value) => assertType(is.uint16Array(value), "Uint16Array" /* Uint16Array */, value),
-    int32Array: (value) => assertType(is.int32Array(value), "Int32Array" /* Int32Array */, value),
-    uint32Array: (value) => assertType(is.uint32Array(value), "Uint32Array" /* Uint32Array */, value),
-    float32Array: (value) => assertType(is.float32Array(value), "Float32Array" /* Float32Array */, value),
-    float64Array: (value) => assertType(is.float64Array(value), "Float64Array" /* Float64Array */, value),
-    bigInt64Array: (value) => assertType(is.bigInt64Array(value), "BigInt64Array" /* BigInt64Array */, value),
-    bigUint64Array: (value) => assertType(is.bigUint64Array(value), "BigUint64Array" /* BigUint64Array */, value),
-    arrayBuffer: (value) => assertType(is.arrayBuffer(value), "ArrayBuffer" /* ArrayBuffer */, value),
-    sharedArrayBuffer: (value) => assertType(is.sharedArrayBuffer(value), "SharedArrayBuffer" /* SharedArrayBuffer */, value),
-    dataView: (value) => assertType(is.dataView(value), "DataView" /* DataView */, value),
-    urlInstance: (value) => assertType(is.urlInstance(value), "URL" /* URL */, value),
+    boundFunction: (value) => assertType(is.boundFunction(value), 'Function', value),
+    regExp: (value) => assertType(is.regExp(value), 'RegExp', value),
+    date: (value) => assertType(is.date(value), 'Date', value),
+    error: (value) => assertType(is.error(value), 'Error', value),
+    map: (value) => assertType(is.map(value), 'Map', value),
+    set: (value) => assertType(is.set(value), 'Set', value),
+    weakMap: (value) => assertType(is.weakMap(value), 'WeakMap', value),
+    weakSet: (value) => assertType(is.weakSet(value), 'WeakSet', value),
+    int8Array: (value) => assertType(is.int8Array(value), 'Int8Array', value),
+    uint8Array: (value) => assertType(is.uint8Array(value), 'Uint8Array', value),
+    uint8ClampedArray: (value) => assertType(is.uint8ClampedArray(value), 'Uint8ClampedArray', value),
+    int16Array: (value) => assertType(is.int16Array(value), 'Int16Array', value),
+    uint16Array: (value) => assertType(is.uint16Array(value), 'Uint16Array', value),
+    int32Array: (value) => assertType(is.int32Array(value), 'Int32Array', value),
+    uint32Array: (value) => assertType(is.uint32Array(value), 'Uint32Array', value),
+    float32Array: (value) => assertType(is.float32Array(value), 'Float32Array', value),
+    float64Array: (value) => assertType(is.float64Array(value), 'Float64Array', value),
+    bigInt64Array: (value) => assertType(is.bigInt64Array(value), 'BigInt64Array', value),
+    bigUint64Array: (value) => assertType(is.bigUint64Array(value), 'BigUint64Array', value),
+    arrayBuffer: (value) => assertType(is.arrayBuffer(value), 'ArrayBuffer', value),
+    sharedArrayBuffer: (value) => assertType(is.sharedArrayBuffer(value), 'SharedArrayBuffer', value),
+    dataView: (value) => assertType(is.dataView(value), 'DataView', value),
+    urlInstance: (value) => assertType(is.urlInstance(value), 'URL', value),
     urlString: (value) => assertType(is.urlString(value), "string with a URL" /* urlString */, value),
     truthy: (value) => assertType(is.truthy(value), "truthy" /* truthy */, value),
     falsy: (value) => assertType(is.falsy(value), "falsy" /* falsy */, value),
@@ -4105,8 +4214,8 @@ exports.assert = {
     plainObject: (value) => assertType(is.plainObject(value), "plain object" /* plainObject */, value),
     typedArray: (value) => assertType(is.typedArray(value), "TypedArray" /* typedArray */, value),
     arrayLike: (value) => assertType(is.arrayLike(value), "array-like" /* arrayLike */, value),
-    domElement: (value) => assertType(is.domElement(value), "Element" /* domElement */, value),
-    observable: (value) => assertType(is.observable(value), "Observable" /* Observable */, value),
+    domElement: (value) => assertType(is.domElement(value), "HTMLElement" /* domElement */, value),
+    observable: (value) => assertType(is.observable(value), 'Observable', value),
     nodeStream: (value) => assertType(is.nodeStream(value), "Node.js Stream" /* nodeStream */, value),
     infinite: (value) => assertType(is.infinite(value), "infinite number" /* infinite */, value),
     emptyArray: (value) => assertType(is.emptyArray(value), "empty array" /* emptyArray */, value),
@@ -4645,7 +4754,11 @@ class CacheableLookup {
 				const newPromise = this.queryAndCache(hostname);
 				this._pending[hostname] = newPromise;
 
-				cached = await newPromise;
+				try {
+					cached = await newPromise;
+				} finally {
+					delete this._pending[hostname];
+				}
 			}
 		}
 
@@ -4759,29 +4872,21 @@ class CacheableLookup {
 			return this._dnsLookup(hostname, all);
 		}
 
-		try {
-			let query = await this._resolve(hostname);
+		let query = await this._resolve(hostname);
 
-			if (query.entries.length === 0 && this._fallback) {
-				query = await this._lookup(hostname);
+		if (query.entries.length === 0 && this._fallback) {
+			query = await this._lookup(hostname);
 
-				if (query.entries.length !== 0) {
-					// Use `dns.lookup(...)` for that particular hostname
-					this._hostnamesToFallback.add(hostname);
-				}
+			if (query.entries.length !== 0) {
+				// Use `dns.lookup(...)` for that particular hostname
+				this._hostnamesToFallback.add(hostname);
 			}
-
-			const cacheTtl = query.entries.length === 0 ? this.errorTtl : query.cacheTtl;
-			await this._set(hostname, query.entries, cacheTtl);
-
-			delete this._pending[hostname];
-
-			return query.entries;
-		} catch (error) {
-			delete this._pending[hostname];
-
-			throw error;
 		}
+
+		const cacheTtl = query.entries.length === 0 ? this.errorTtl : query.cacheTtl;
+		await this._set(hostname, query.entries, cacheTtl);
+
+		return query.entries;
 	}
 
 	_tick(ms) {
@@ -4886,18 +4991,26 @@ module.exports.default = CacheableLookup;
 
 "use strict";
 
-function __export(m) {
-    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
-}
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const events_1 = __webpack_require__(614);
+const is_1 = __webpack_require__(534);
 const PCancelable = __webpack_require__(557);
-const calculate_retry_delay_1 = __webpack_require__(927);
 const types_1 = __webpack_require__(36);
-const core_1 = __webpack_require__(468);
-exports.PromisableRequest = core_1.default;
+const parse_body_1 = __webpack_require__(121);
+const core_1 = __webpack_require__(946);
 const proxy_events_1 = __webpack_require__(628);
 const get_buffer_1 = __webpack_require__(452);
+const is_response_ok_1 = __webpack_require__(422);
 const proxiedRequestEvents = [
     'request',
     'response',
@@ -4905,85 +5018,63 @@ const proxiedRequestEvents = [
     'uploadProgress',
     'downloadProgress'
 ];
-function asPromise(options) {
-    let retryCount = 0;
+function asPromise(normalizedOptions) {
     let globalRequest;
     let globalResponse;
     const emitter = new events_1.EventEmitter();
-    const promise = new PCancelable((resolve, _reject, onCancel) => {
-        const makeRequest = () => {
-            // Support retries
-            // `options.throwHttpErrors` needs to be always true,
-            // so the HTTP errors are caught and the request is retried.
-            // The error is **eventually** thrown if the user value is true.
-            const { throwHttpErrors } = options;
-            if (!throwHttpErrors) {
-                options.throwHttpErrors = true;
-            }
-            // Note from @szmarczak: I think we should use `request.options` instead of the local options
-            const request = new core_1.default(options.url, options);
+    const promise = new PCancelable((resolve, reject, onCancel) => {
+        const makeRequest = (retryCount) => {
+            const request = new core_1.default(undefined, normalizedOptions);
+            request.retryCount = retryCount;
             request._noPipe = true;
             onCancel(() => request.destroy());
-            const reject = async (error) => {
-                try {
-                    for (const hook of options.hooks.beforeError) {
-                        // eslint-disable-next-line no-await-in-loop
-                        error = await hook(error);
-                    }
-                }
-                catch (error_) {
-                    _reject(new types_1.RequestError(error_.message, error_, request));
-                    return;
-                }
-                _reject(error);
-            };
+            onCancel.shouldReject = false;
+            onCancel(() => reject(new types_1.CancelError(request)));
             globalRequest = request;
-            const onResponse = async (response) => {
+            request.once('response', async (response) => {
                 var _a;
                 response.retryCount = retryCount;
                 if (response.request.aborted) {
                     // Canceled while downloading - will throw a `CancelError` or `TimeoutError` error
                     return;
                 }
-                const isOk = () => {
-                    const { statusCode } = response;
-                    const limitStatusCode = options.followRedirect ? 299 : 399;
-                    return (statusCode >= 200 && statusCode <= limitStatusCode) || statusCode === 304;
-                };
                 // Download body
                 let rawBody;
                 try {
                     rawBody = await get_buffer_1.default(request);
                     response.rawBody = rawBody;
                 }
-                catch (_) {
+                catch (_b) {
                     // The same error is caught below.
                     // See request.once('error')
+                    return;
+                }
+                if (request._isAboutToError) {
                     return;
                 }
                 // Parse body
                 const contentEncoding = ((_a = response.headers['content-encoding']) !== null && _a !== void 0 ? _a : '').toLowerCase();
                 const isCompressed = ['gzip', 'deflate', 'br'].includes(contentEncoding);
+                const { options } = request;
                 if (isCompressed && !options.decompress) {
                     response.body = rawBody;
                 }
                 else {
                     try {
-                        response.body = core_1.parseBody(response, options.responseType, options.parseJson, options.encoding);
+                        response.body = parse_body_1.default(response, options.responseType, options.parseJson, options.encoding);
                     }
                     catch (error) {
                         // Fallback to `utf8`
                         response.body = rawBody.toString();
-                        if (isOk()) {
-                            // TODO: Call `request._beforeError`, see https://github.com/nodejs/node/issues/32995
-                            reject(error);
+                        if (is_response_ok_1.isResponseOk(response)) {
+                            request._beforeError(error);
                             return;
                         }
                     }
                 }
                 try {
                     for (const [index, hook] of options.hooks.afterResponse.entries()) {
-                        // @ts-ignore TS doesn't notice that CancelableRequest is a Promise
+                        // @ts-expect-error TS doesn't notice that CancelableRequest is a Promise
                         // eslint-disable-next-line no-await-in-loop
                         response = await hook(response, async (updatedOptions) => {
                             const typedOptions = core_1.default.normalizeArguments(undefined, {
@@ -5011,89 +5102,41 @@ function asPromise(options) {
                     }
                 }
                 catch (error) {
-                    // TODO: Call `request._beforeError`, see https://github.com/nodejs/node/issues/32995
-                    reject(new types_1.RequestError(error.message, error, request));
+                    request._beforeError(new types_1.RequestError(error.message, error, request));
                     return;
                 }
-                if (throwHttpErrors && !isOk()) {
-                    reject(new types_1.HTTPError(response));
+                if (!is_response_ok_1.isResponseOk(response)) {
+                    request._beforeError(new types_1.HTTPError(response));
                     return;
                 }
                 globalResponse = response;
-                resolve(options.resolveBodyOnly ? response.body : response);
-            };
-            const onError = async (error) => {
+                resolve(request.options.resolveBodyOnly ? response.body : response);
+            });
+            const onError = (error) => {
                 if (promise.isCanceled) {
                     return;
                 }
-                if (!request.options) {
-                    reject(error);
+                const { options } = request;
+                if (error instanceof types_1.HTTPError && !options.throwHttpErrors) {
+                    const { response } = error;
+                    resolve(request.options.resolveBodyOnly ? response.body : response);
                     return;
                 }
-                request.off('response', onResponse);
-                let backoff;
-                retryCount++;
-                try {
-                    backoff = await options.retry.calculateDelay({
-                        attemptCount: retryCount,
-                        retryOptions: options.retry,
-                        error,
-                        computedValue: calculate_retry_delay_1.default({
-                            attemptCount: retryCount,
-                            retryOptions: options.retry,
-                            error,
-                            computedValue: 0
-                        })
-                    });
-                }
-                catch (error_) {
-                    // Don't emit the `response` event
-                    request.destroy();
-                    reject(new types_1.RequestError(error_.message, error, request));
-                    return;
-                }
-                if (backoff) {
-                    // Don't emit the `response` event
-                    request.destroy();
-                    const retry = async () => {
-                        options.throwHttpErrors = throwHttpErrors;
-                        try {
-                            for (const hook of options.hooks.beforeRetry) {
-                                // eslint-disable-next-line no-await-in-loop
-                                await hook(options, error, retryCount);
-                            }
-                        }
-                        catch (error_) {
-                            // Don't emit the `response` event
-                            request.destroy();
-                            reject(new types_1.RequestError(error_.message, error, request));
-                            return;
-                        }
-                        makeRequest();
-                    };
-                    setTimeout(retry, backoff);
-                    return;
-                }
-                // The retry has not been made
-                retryCount--;
-                if (error instanceof types_1.HTTPError) {
-                    // The error will be handled by the `response` event
-                    onResponse(request._response);
-                    // Reattach the error handler, because there may be a timeout later.
-                    process.nextTick(() => {
-                        request.once('error', onError);
-                    });
-                    return;
-                }
-                // Don't emit the `response` event
-                request.destroy();
                 reject(error);
             };
-            request.once('response', onResponse);
             request.once('error', onError);
+            const previousBody = request.options.body;
+            request.once('retry', (newRetryCount, error) => {
+                var _a, _b;
+                if (previousBody === ((_a = error.request) === null || _a === void 0 ? void 0 : _a.options.body) && is_1.default.nodeStream((_b = error.request) === null || _b === void 0 ? void 0 : _b.options.body)) {
+                    onError(error);
+                    return;
+                }
+                makeRequest(newRetryCount);
+            });
             proxy_events_1.default(request, emitter, proxiedRequestEvents);
         };
-        makeRequest();
+        makeRequest(0);
     });
     promise.on = (event, fn) => {
         emitter.on(event, fn);
@@ -5103,14 +5146,16 @@ function asPromise(options) {
         const newPromise = (async () => {
             // Wait until downloading has ended
             await promise;
-            return core_1.parseBody(globalResponse, responseType, options.parseJson, options.encoding);
+            const { options } = globalResponse.request;
+            return parse_body_1.default(globalResponse, responseType, options.parseJson, options.encoding);
         })();
         Object.defineProperties(newPromise, Object.getOwnPropertyDescriptors(promise));
         return newPromise;
     };
     promise.json = () => {
-        if (!globalRequest.writableFinished && options.headers.accept === undefined) {
-            options.headers.accept = 'application/json';
+        const { headers } = globalRequest.options;
+        if (!globalRequest.writableFinished && headers.accept === undefined) {
+            headers.accept = 'application/json';
         }
         return shortcut('json');
     };
@@ -5119,7 +5164,44 @@ function asPromise(options) {
     return promise;
 }
 exports.default = asPromise;
-__export(__webpack_require__(36));
+__exportStar(__webpack_require__(36), exports);
+
+
+/***/ }),
+
+/***/ 594:
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.retryAfterStatusCodes = void 0;
+exports.retryAfterStatusCodes = new Set([413, 429, 503]);
+const calculateRetryDelay = ({ attemptCount, retryOptions, error, retryAfter }) => {
+    if (attemptCount > retryOptions.limit) {
+        return 0;
+    }
+    const hasMethod = retryOptions.methods.includes(error.options.method);
+    const hasErrorCode = retryOptions.errorCodes.includes(error.code);
+    const hasStatusCode = error.response && retryOptions.statusCodes.includes(error.response.statusCode);
+    if (!hasMethod || (!hasErrorCode && !hasStatusCode)) {
+        return 0;
+    }
+    if (error.response) {
+        if (retryAfter) {
+            if (retryOptions.maxRetryAfter === undefined || retryAfter > retryOptions.maxRetryAfter) {
+                return 0;
+            }
+            return retryAfter;
+        }
+        if (error.response.statusCode === 413) {
+            return 0;
+        }
+    }
+    const noise = Math.random() * 100;
+    return ((2 ** (attemptCount - 1)) * 1000) + noise;
+};
+exports.default = calculateRetryDelay;
 
 
 /***/ }),
@@ -5318,6 +5400,7 @@ module.exports = header => {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.dnsLookupIpVersionToFamily = exports.isDnsLookupIpVersion = void 0;
 const conversionTable = {
     auto: 0,
     ipv4: 4,
@@ -5510,6 +5593,9 @@ exports.default = async (body, headers) => {
     }
     if (body instanceof fs_1.ReadStream) {
         const { size } = await statAsync(body.path);
+        if (size === 0) {
+            return undefined;
+        }
         return size;
     }
     return undefined;
@@ -5577,6 +5663,7 @@ module.exports.default = deferToConnect;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.TimeoutError = void 0;
 const net = __webpack_require__(631);
 const unhandle_1 = __webpack_require__(784);
 const reentry = Symbol('reentry');
@@ -5706,6 +5793,16 @@ module.exports = require("url");
 
 /***/ }),
 
+/***/ 839:
+/***/ (function(__unusedmodule, exports) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+
+
+/***/ }),
+
 /***/ 861:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
@@ -5792,6 +5889,7 @@ const QuickLRU = __webpack_require__(290);
 const kCurrentStreamsCount = Symbol('currentStreamsCount');
 const kRequest = Symbol('request');
 const kOriginSet = Symbol('cachedOriginSet');
+const kGracefullyClosing = Symbol('gracefullyClosing');
 
 const nameKeys = [
 	// `http2.connect()` options
@@ -5828,52 +5926,35 @@ const nameKeys = [
 	'sessionIdContext'
 ];
 
-const removeSession = (where, name, session) => {
-	if (name in where) {
-		const index = where[name].indexOf(session);
+const getSortedIndex = (array, value, compare) => {
+	let low = 0;
+	let high = array.length;
 
-		if (index !== -1) {
-			where[name].splice(index, 1);
+	while (low < high) {
+		const mid = (low + high) >>> 1;
 
-			if (where[name].length === 0) {
-				delete where[name];
-			}
-
-			return true;
+		/* istanbul ignore next */
+		if (compare(array[mid], value)) {
+			// This never gets called because we use descending sort. Better to have this anyway.
+			low = mid + 1;
+		} else {
+			high = mid;
 		}
 	}
 
-	return false;
+	return low;
 };
 
-const addSession = (where, name, session) => {
-	if (name in where) {
-		where[name].push(session);
-	} else {
-		where[name] = [session];
-	}
-};
-
-const getSessions = (where, name, normalizedOrigin) => {
-	if (!(name in where)) {
-		return [];
-	}
-
-	return where[name].filter(session => {
-		return !session.closed && !session.destroyed && session[kOriginSet].includes(normalizedOrigin);
-	});
+const compareSessions = (a, b) => {
+	return a.remoteSettings.maxConcurrentStreams > b.remoteSettings.maxConcurrentStreams;
 };
 
 // See https://tools.ietf.org/html/rfc8336
-const closeCoveredSessions = (where, name, session) => {
-	if (!(name in where)) {
-		return;
-	}
-
+const closeCoveredSessions = (where, session) => {
 	// Clients SHOULD NOT emit new requests on any connection whose Origin
 	// Set is a proper subset of another connection's Origin Set, and they
 	// SHOULD close it once all outstanding requests are satisfied.
-	for (const coveredSession of where[name]) {
+	for (const coveredSession of where) {
 		if (
 			// The set is a proper subset when its length is less than the other set.
 			coveredSession[kOriginSet].length < session[kOriginSet].length &&
@@ -5882,43 +5963,68 @@ const closeCoveredSessions = (where, name, session) => {
 			coveredSession[kOriginSet].every(origin => session[kOriginSet].includes(origin)) &&
 
 			// Makes sure that the session can handle all requests from the covered session.
-			// TODO: can the session become uncovered when a stream is closed after checking this condition?
 			coveredSession[kCurrentStreamsCount] + session[kCurrentStreamsCount] <= session.remoteSettings.maxConcurrentStreams
 		) {
 			// This allows pending requests to finish and prevents making new requests.
-			coveredSession.close();
+			gracefullyClose(coveredSession);
 		}
 	}
 };
 
 // This is basically inverted `closeCoveredSessions(...)`.
-const closeSessionIfCovered = (where, name, coveredSession) => {
-	if (!(name in where)) {
-		return;
-	}
-
-	for (const session of where[name]) {
+const closeSessionIfCovered = (where, coveredSession) => {
+	for (const session of where) {
 		if (
 			coveredSession[kOriginSet].length < session[kOriginSet].length &&
 			coveredSession[kOriginSet].every(origin => session[kOriginSet].includes(origin)) &&
 			coveredSession[kCurrentStreamsCount] + session[kCurrentStreamsCount] <= session.remoteSettings.maxConcurrentStreams
 		) {
-			coveredSession.close();
+			gracefullyClose(coveredSession);
 		}
 	}
 };
 
+const getSessions = ({agent, isFree}) => {
+	const result = {};
+
+	// eslint-disable-next-line guard-for-in
+	for (const normalizedOptions in agent.sessions) {
+		const sessions = agent.sessions[normalizedOptions];
+
+		const filtered = sessions.filter(session => {
+			const result = session[Agent.kCurrentStreamsCount] < session.remoteSettings.maxConcurrentStreams;
+
+			return isFree ? result : !result;
+		});
+
+		if (filtered.length !== 0) {
+			result[normalizedOptions] = filtered;
+		}
+	}
+
+	return result;
+};
+
+const gracefullyClose = session => {
+	session[kGracefullyClosing] = true;
+
+	if (session[kCurrentStreamsCount] === 0) {
+		session.close();
+	}
+};
+
 class Agent extends EventEmitter {
-	constructor({timeout = 60000, maxSessions = Infinity, maxFreeSessions = 1, maxCachedTlsSessions = 100} = {}) {
+	constructor({timeout = 60000, maxSessions = Infinity, maxFreeSessions = 10, maxCachedTlsSessions = 100} = {}) {
 		super();
 
 		// A session is considered busy when its current streams count
 		// is equal to or greater than the `maxConcurrentStreams` value.
-		this.busySessions = {};
 
 		// A session is considered free when its current streams count
 		// is less than the `maxConcurrentStreams` value.
-		this.freeSessions = {};
+
+		// SESSIONS[NORMALIZED_OPTIONS] = [];
+		this.sessions = {};
 
 		// The queue for creating new sessions. It looks like this:
 		// QUEUE[NORMALIZED_OPTIONS][NORMALIZED_ORIGIN] = ENTRY_FUNCTION
@@ -5932,13 +6038,15 @@ class Agent extends EventEmitter {
 		// Each session will use this timeout value.
 		this.timeout = timeout;
 
-		// Max sessions per origin.
+		// Max sessions in total
 		this.maxSessions = maxSessions;
 
-		// Max free sessions per origin.
+		// Max free sessions in total
 		// TODO: decreasing `maxFreeSessions` should close some sessions
-		// TODO: should `maxFreeSessions` be related only to sessions with 0 pending streams?
 		this.maxFreeSessions = maxFreeSessions;
+
+		this._freeSessionsCount = 0;
+		this._sessionsCount = 0;
 
 		// We don't support push streams by default.
 		this.settings = {
@@ -5980,21 +6088,17 @@ class Agent extends EventEmitter {
 			return;
 		}
 
-		// We need the busy sessions length to check if a session can be created.
-		const busyLength = getSessions(this.busySessions, normalizedOptions, normalizedOrigin).length;
 		const item = this.queue[normalizedOptions][normalizedOrigin];
 
 		// The entry function can be run only once.
-		if (busyLength < this.maxSessions && !item.completed) {
+		// BUG: The session may be never created when:
+		// - the first condition is false AND
+		// - this function is never called with the same arguments in the future.
+		if (this._sessionsCount < this.maxSessions && !item.completed) {
 			item.completed = true;
 
 			item();
 		}
-	}
-
-	_closeCoveredSessions(normalizedOptions, session) {
-		closeCoveredSessions(this.freeSessions, normalizedOptions, session);
-		closeCoveredSessions(this.busySessions, normalizedOptions, session);
 	}
 
 	getSession(origin, options, listeners) {
@@ -6020,28 +6124,65 @@ class Agent extends EventEmitter {
 				return;
 			}
 
-			if (normalizedOptions in this.freeSessions) {
-				// Look for all available free sessions.
-				const freeSessions = getSessions(this.freeSessions, normalizedOptions, normalizedOrigin);
+			if (normalizedOptions in this.sessions) {
+				const sessions = this.sessions[normalizedOptions];
 
-				if (freeSessions.length !== 0) {
-					// Use session which has the biggest stream capacity in order to use the smallest number of sessions possible.
-					const session = freeSessions.reduce((previousSession, nextSession) => {
-						if (
-							nextSession.remoteSettings.maxConcurrentStreams >= previousSession.remoteSettings.maxConcurrentStreams &&
-							nextSession[kCurrentStreamsCount] > previousSession[kCurrentStreamsCount]
-						) {
-							return nextSession;
-						}
+				let maxConcurrentStreams = -1;
+				let currentStreamsCount = -1;
+				let optimalSession;
 
-						return previousSession;
-					});
+				// We could just do this.sessions[normalizedOptions].find(...) but that isn't optimal.
+				// Additionally, we are looking for session which has biggest current pending streams count.
+				for (const session of sessions) {
+					const sessionMaxConcurrentStreams = session.remoteSettings.maxConcurrentStreams;
 
-					for (const {resolve} of listeners) {
-						// TODO: The session can get busy here
-						resolve(session);
+					if (sessionMaxConcurrentStreams < maxConcurrentStreams) {
+						break;
 					}
 
+					if (session[kOriginSet].includes(normalizedOrigin)) {
+						const sessionCurrentStreamsCount = session[kCurrentStreamsCount];
+
+						if (
+							sessionCurrentStreamsCount >= sessionMaxConcurrentStreams ||
+							session[kGracefullyClosing] ||
+							// Unfortunately the `close` event isn't called immediately,
+							// so `session.destroyed` is `true`, but `session.closed` is `false`.
+							session.destroyed
+						) {
+							continue;
+						}
+
+						// We only need set this once.
+						if (!optimalSession) {
+							maxConcurrentStreams = sessionMaxConcurrentStreams;
+						}
+
+						// We're looking for the session which has biggest current pending stream count,
+						// in order to minimalize the amount of active sessions.
+						if (sessionCurrentStreamsCount > currentStreamsCount) {
+							optimalSession = session;
+							currentStreamsCount = sessionCurrentStreamsCount;
+						}
+					}
+				}
+
+				if (optimalSession) {
+					/* istanbul ignore next: safety check */
+					if (listeners.length !== 1) {
+						for (const {reject} of listeners) {
+							const error = new Error(
+								`Expected the length of listeners to be 1, got ${listeners.length}.\n` +
+								'Please report this to https://github.com/szmarczak/http2-wrapper/'
+							);
+
+							reject(error);
+						}
+
+						return;
+					}
+
+					listeners[0].resolve(optimalSession);
 					return;
 				}
 			}
@@ -6051,6 +6192,9 @@ class Agent extends EventEmitter {
 					// There's already an item in the queue, just attach ourselves to it.
 					this.queue[normalizedOptions][normalizedOrigin].listeners.push(...listeners);
 
+					// This shouldn't be executed here.
+					// See the comment inside _tryToCreateNewSession.
+					this._tryToCreateNewSession(normalizedOptions, normalizedOrigin);
 					return;
 				}
 			} else {
@@ -6075,64 +6219,28 @@ class Agent extends EventEmitter {
 			const entry = () => {
 				const name = `${normalizedOrigin}:${normalizedOptions}`;
 				let receivedSettings = false;
-				let servername;
 
 				try {
-					const tlsSessionCache = this.tlsSessionCache.get(name);
-
 					const session = http2.connect(origin, {
 						createConnection: this.createConnection,
 						settings: this.settings,
-						session: tlsSessionCache ? tlsSessionCache.session : undefined,
+						session: this.tlsSessionCache.get(name),
 						...options
 					});
 					session[kCurrentStreamsCount] = 0;
-
-					// Tries to free the session.
-					const freeSession = () => {
-						// Fetch the smallest amount of free sessions of any origin we have.
-						const freeSessionsCount = session[kOriginSet].reduce((accumulator, origin) => {
-							return Math.min(accumulator, getSessions(this.freeSessions, normalizedOptions, origin).length);
-						}, Infinity);
-
-						// Check the limit.
-						if (freeSessionsCount < this.maxFreeSessions) {
-							addSession(this.freeSessions, normalizedOptions, session);
-
-							return true;
-						}
-
-						return false;
-					};
+					session[kGracefullyClosing] = false;
 
 					const isFree = () => session[kCurrentStreamsCount] < session.remoteSettings.maxConcurrentStreams;
+					let wasFree = true;
 
 					session.socket.once('session', tlsSession => {
-						// We need to cache the servername due to a bug in OpenSSL.
-						setImmediate(() => {
-							this.tlsSessionCache.set(name, {
-								session: tlsSession,
-								servername
-							});
-						});
-					});
-
-					// OpenSSL bug workaround.
-					// See https://github.com/nodejs/node/issues/28985
-					session.socket.once('secureConnect', () => {
-						servername = session.socket.servername;
-
-						if (servername === false && typeof tlsSessionCache !== 'undefined' && typeof tlsSessionCache.servername !== 'undefined') {
-							session.socket.servername = tlsSessionCache.servername;
-						}
+						this.tlsSessionCache.set(name, tlsSession);
 					});
 
 					session.once('error', error => {
-						// `receivedSettings` is true when the session has successfully connected.
-						if (!receivedSettings) {
-							for (const {reject} of listeners) {
-								reject(error);
-							}
+						// Listeners are empty when the session successfully connected.
+						for (const {reject} of listeners) {
+							reject(error);
 						}
 
 						// The connection got broken, purge the cache.
@@ -6141,24 +6249,41 @@ class Agent extends EventEmitter {
 
 					session.setTimeout(this.timeout, () => {
 						// Terminates all streams owned by this session.
+						// TODO: Maybe the streams should have a "Session timed out" error?
 						session.destroy();
 					});
 
 					session.once('close', () => {
-						if (!receivedSettings) {
+						if (receivedSettings) {
+							// 1. If it wasn't free then no need to decrease because
+							//    it has been decreased already in session.request().
+							// 2. `stream.once('close')` won't increment the count
+							//    because the session is already closed.
+							if (wasFree) {
+								this._freeSessionsCount--;
+							}
+
+							this._sessionsCount--;
+
+							// This cannot be moved to the stream logic,
+							// because there may be a session that hadn't made a single request.
+							const where = this.sessions[normalizedOptions];
+							where.splice(where.indexOf(session), 1);
+
+							if (where.length === 0) {
+								delete this.sessions[normalizedOptions];
+							}
+						} else {
 							// Broken connection
 							const error = new Error('Session closed without receiving a SETTINGS frame');
+							error.code = 'HTTP2WRAPPER_NOSETTINGS';
 
 							for (const {reject} of listeners) {
 								reject(error);
 							}
+
+							removeFromQueue();
 						}
-
-						removeFromQueue();
-
-						// This cannot be moved to the stream logic,
-						// because there may be a session that hadn't made a single request.
-						removeSession(this.freeSessions, normalizedOptions, session);
 
 						// There may be another session awaiting.
 						this._tryToCreateNewSession(normalizedOptions, normalizedOrigin);
@@ -6166,7 +6291,7 @@ class Agent extends EventEmitter {
 
 					// Iterates over the queue and processes listeners.
 					const processListeners = () => {
-						if (!(normalizedOptions in this.queue)) {
+						if (!(normalizedOptions in this.queue) || !isFree()) {
 							return;
 						}
 
@@ -6181,10 +6306,11 @@ class Agent extends EventEmitter {
 									listeners.shift().resolve(session);
 								}
 
-								if (this.queue[normalizedOptions][origin].listeners.length === 0) {
-									delete this.queue[normalizedOptions][origin];
+								const where = this.queue[normalizedOptions];
+								if (where[origin].listeners.length === 0) {
+									delete where[origin];
 
-									if (Object.keys(this.queue[normalizedOptions]).length === 0) {
+									if (Object.keys(where).length === 0) {
 										delete this.queue[normalizedOptions];
 										break;
 									}
@@ -6199,7 +6325,7 @@ class Agent extends EventEmitter {
 					};
 
 					// The Origin Set cannot shrink. No need to check if it suddenly became covered by another one.
-					session.once('origin', () => {
+					session.on('origin', () => {
 						session[kOriginSet] = session.originSet;
 
 						if (!isFree()) {
@@ -6207,18 +6333,19 @@ class Agent extends EventEmitter {
 							return;
 						}
 
-						// Close covered sessions (if possible).
-						this._closeCoveredSessions(normalizedOptions, session);
-
 						processListeners();
 
-						// `session.remoteSettings.maxConcurrentStreams` might get increased
-						session.on('remoteSettings', () => {
-							this._closeCoveredSessions(normalizedOptions, session);
-						});
+						// Close covered sessions (if possible).
+						closeCoveredSessions(this.sessions[normalizedOptions], session);
 					});
 
 					session.once('remoteSettings', () => {
+						// Fix Node.js bug preventing the process from exiting
+						session.ref();
+						session.unref();
+
+						this._sessionsCount++;
+
 						// The Agent could have been destroyed already.
 						if (entry.destroyed) {
 							const error = new Error('Agent has been destroyed');
@@ -6232,24 +6359,30 @@ class Agent extends EventEmitter {
 						}
 
 						session[kOriginSet] = session.originSet;
-						this.emit('session', session);
 
-						if (freeSession()) {
-							// Process listeners, we're free.
-							processListeners();
-						} else if (this.maxFreeSessions === 0) {
-							processListeners();
+						{
+							const where = this.sessions;
 
-							// We're closing ASAP, when all possible requests have been made for this event loop tick.
-							setImmediate(() => {
-								session.close();
-							});
-						} else {
-							// Too late, another free session took these listeners.
-							session.close();
+							if (normalizedOptions in where) {
+								const sessions = where[normalizedOptions];
+								sessions.splice(getSortedIndex(sessions, session, compareSessions), 0, session);
+							} else {
+								where[normalizedOptions] = [session];
+							}
 						}
 
+						this._freeSessionsCount += 1;
+						receivedSettings = true;
+
+						this.emit('session', session);
+
+						processListeners();
 						removeFromQueue();
+
+						// TODO: Close last recently used (or least used?) session
+						if (session[kCurrentStreamsCount] === 0 && this._freeSessionsCount > this.maxFreeSessions) {
+							session.close();
+						}
 
 						// Check if we haven't managed to execute all listeners.
 						if (listeners.length !== 0) {
@@ -6258,61 +6391,67 @@ class Agent extends EventEmitter {
 							listeners.length = 0;
 						}
 
-						receivedSettings = true;
-
 						// `session.remoteSettings.maxConcurrentStreams` might get increased
 						session.on('remoteSettings', () => {
-							// Check if we're eligible to become a free session
-							if (isFree() && removeSession(this.busySessions, normalizedOptions, session)) {
-								// Check for free seats
-								if (freeSession()) {
-									processListeners();
-								} else {
-									// Assume it's still a busy session
-									addSession(this.busySessions, normalizedOptions, session);
-								}
-							}
+							processListeners();
+
+							// In case the Origin Set changes
+							closeCoveredSessions(this.sessions[normalizedOptions], session);
 						});
 					});
 
 					// Shim `session.request()` in order to catch all streams
 					session[kRequest] = session.request;
 					session.request = (headers, streamOptions) => {
+						if (session[kGracefullyClosing]) {
+							throw new Error('The session is gracefully closing. No new streams are allowed.');
+						}
+
 						const stream = session[kRequest](headers, streamOptions);
 
-						// The process won't exit until the session is closed.
+						// The process won't exit until the session is closed or all requests are gone.
 						session.ref();
 
 						++session[kCurrentStreamsCount];
 
-						// Check if we became busy
-						if (!isFree() && removeSession(this.freeSessions, normalizedOptions, session)) {
-							addSession(this.busySessions, normalizedOptions, session);
+						if (session[kCurrentStreamsCount] === session.remoteSettings.maxConcurrentStreams) {
+							this._freeSessionsCount--;
 						}
 
 						stream.once('close', () => {
+							wasFree = isFree();
+
 							--session[kCurrentStreamsCount];
 
-							if (isFree()) {
-								if (session[kCurrentStreamsCount] === 0) {
-									// All requests are finished, the process may exit now.
-									session.unref();
-								}
+							if (!session.destroyed && !session.closed) {
+								closeSessionIfCovered(this.sessions[normalizedOptions], session);
 
-								// Check if we are no longer busy and the session is not broken.
-								if (removeSession(this.busySessions, normalizedOptions, session) && !session.destroyed && !session.closed) {
-									// Check the sessions count of this authority and compare it to `maxSessionsCount`.
-									if (freeSession()) {
-										this._closeCoveredSessions(normalizedOptions, session);
-										processListeners();
-									} else {
+								if (isFree() && !session.closed) {
+									if (!wasFree) {
+										this._freeSessionsCount++;
+
+										wasFree = true;
+									}
+
+									const isEmpty = session[kCurrentStreamsCount] === 0;
+
+									if (isEmpty) {
+										session.unref();
+									}
+
+									if (
+										isEmpty &&
+										(
+											this._freeSessionsCount > this.maxFreeSessions ||
+											session[kGracefullyClosing]
+										)
+									) {
 										session.close();
+									} else {
+										closeCoveredSessions(this.sessions[normalizedOptions], session);
+										processListeners();
 									}
 								}
-							}
-
-							if (!session.destroyed && !session.closed) {
-								closeSessionIfCovered(this.freeSessions, normalizedOptions, session);
 							}
 						});
 
@@ -6341,7 +6480,11 @@ class Agent extends EventEmitter {
 			this.getSession(origin, options, [{
 				reject,
 				resolve: session => {
-					resolve(session.request(headers, streamOptions));
+					try {
+						resolve(session.request(headers, streamOptions));
+					} catch (error) {
+						reject(error);
+					}
 				}
 			}]);
 		});
@@ -6365,8 +6508,8 @@ class Agent extends EventEmitter {
 	}
 
 	closeFreeSessions() {
-		for (const freeSessions of Object.values(this.freeSessions)) {
-			for (const session of freeSessions) {
+		for (const sessions of Object.values(this.sessions)) {
+			for (const session of sessions) {
 				if (session[kCurrentStreamsCount] === 0) {
 					session.close();
 				}
@@ -6375,14 +6518,8 @@ class Agent extends EventEmitter {
 	}
 
 	destroy(reason) {
-		for (const busySessions of Object.values(this.busySessions)) {
-			for (const session of busySessions) {
-				session.destroy(reason);
-			}
-		}
-
-		for (const freeSessions of Object.values(this.freeSessions)) {
-			for (const session of freeSessions) {
+		for (const sessions of Object.values(this.sessions)) {
+			for (const session of sessions) {
 				session.destroy(reason);
 			}
 		}
@@ -6396,7 +6533,18 @@ class Agent extends EventEmitter {
 		// New requests should NOT attach to destroyed sessions
 		this.queue = {};
 	}
+
+	get freeSessions() {
+		return getSessions({agent: this, isFree: true});
+	}
+
+	get busySessions() {
+		return getSessions({agent: this, isFree: false});
+	}
 }
+
+Agent.kCurrentStreamsCount = kCurrentStreamsCount;
+Agent.kGracefullyClosing = kGracefullyClosing;
 
 module.exports = {
 	Agent,
@@ -6505,58 +6653,13 @@ exports.default = createRejection;
 
 /***/ }),
 
-/***/ 927:
-/***/ (function(__unusedmodule, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const types_1 = __webpack_require__(36);
-const retryAfterStatusCodes = new Set([413, 429, 503]);
-const isErrorWithResponse = (error) => (error instanceof types_1.HTTPError || error instanceof types_1.ParseError || error instanceof types_1.MaxRedirectsError);
-const calculateRetryDelay = ({ attemptCount, retryOptions, error }) => {
-    if (attemptCount > retryOptions.limit) {
-        return 0;
-    }
-    const hasMethod = retryOptions.methods.includes(error.options.method);
-    const hasErrorCode = retryOptions.errorCodes.includes(error.code);
-    const hasStatusCode = isErrorWithResponse(error) && retryOptions.statusCodes.includes(error.response.statusCode);
-    if (!hasMethod || (!hasErrorCode && !hasStatusCode)) {
-        return 0;
-    }
-    if (isErrorWithResponse(error)) {
-        const { response } = error;
-        if (response && 'retry-after' in response.headers && retryAfterStatusCodes.has(response.statusCode)) {
-            let after = Number(response.headers['retry-after']);
-            if (Number.isNaN(after)) {
-                after = Date.parse(response.headers['retry-after']) - Date.now();
-            }
-            else {
-                after *= 1000;
-            }
-            if (retryOptions.maxRetryAfter === undefined || after > retryOptions.maxRetryAfter) {
-                return 0;
-            }
-            return after;
-        }
-        if (response.statusCode === 413) {
-            return 0;
-        }
-    }
-    const noise = Math.random() * 100;
-    return ((2 ** (attemptCount - 1)) * 1000) + noise;
-};
-exports.default = calculateRetryDelay;
-
-
-/***/ }),
-
 /***/ 946:
 /***/ (function(__unusedmodule, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.UnsupportedProtocolError = exports.ReadError = exports.TimeoutError = exports.UploadError = exports.CacheError = exports.HTTPError = exports.MaxRedirectsError = exports.RequestError = exports.setNonEnumerableProperties = exports.knownHookEvents = exports.withoutBody = exports.kIsNormalizedAlready = void 0;
 const util_1 = __webpack_require__(669);
 const stream_1 = __webpack_require__(413);
 const fs_1 = __webpack_require__(747);
@@ -6568,7 +6671,7 @@ const http_timer_1 = __webpack_require__(490);
 const cacheable_lookup_1 = __webpack_require__(570);
 const CacheableRequest = __webpack_require__(390);
 const decompressResponse = __webpack_require__(861);
-// @ts-ignore Missing types
+// @ts-expect-error Missing types
 const http2wrapper = __webpack_require__(157);
 const lowercaseKeys = __webpack_require__(474);
 const is_1 = __webpack_require__(534);
@@ -6581,7 +6684,11 @@ const options_to_url_1 = __webpack_require__(907);
 const weakable_map_1 = __webpack_require__(48);
 const get_buffer_1 = __webpack_require__(452);
 const dns_ip_version_1 = __webpack_require__(738);
+const is_response_ok_1 = __webpack_require__(422);
 const deprecation_warning_1 = __webpack_require__(189);
+const normalize_arguments_1 = __webpack_require__(992);
+const calculate_retry_delay_1 = __webpack_require__(594);
+const globalDnsCache = new cacheable_lookup_1.default();
 const kRequest = Symbol('request');
 const kResponse = Symbol('response');
 const kResponseSize = Symbol('responseSize');
@@ -6598,10 +6705,19 @@ const kTriggerRead = Symbol('triggerRead');
 const kBody = Symbol('body');
 const kJobs = Symbol('jobs');
 const kOriginalResponse = Symbol('originalResponse');
+const kRetryTimeout = Symbol('retryTimeout');
 exports.kIsNormalizedAlready = Symbol('isNormalizedAlready');
 const supportsBrotli = is_1.default.string(process.versions.brotli);
 exports.withoutBody = new Set(['GET', 'HEAD']);
-exports.knownHookEvents = ['init', 'beforeRequest', 'beforeRedirect', 'beforeError'];
+exports.knownHookEvents = [
+    'init',
+    'beforeRequest',
+    'beforeRedirect',
+    'beforeError',
+    'beforeRetry',
+    // Promise-Only
+    'afterResponse'
+];
 function validateSearchParameters(searchParameters) {
     // eslint-disable-next-line guard-for-in
     for (const key in searchParameters) {
@@ -6619,6 +6735,7 @@ const waitForOpenFile = async (file) => new Promise((resolve, reject) => {
     const onError = (error) => {
         reject(error);
     };
+    // Node.js 12 has incomplete types
     if (!file.pending) {
         resolve();
     }
@@ -6650,13 +6767,17 @@ exports.setNonEnumerableProperties = (sources, to) => {
                 writable: true,
                 configurable: true,
                 enumerable: false,
-                // @ts-ignore TS doesn't see the check above
+                // @ts-expect-error TS doesn't see the check above
                 value: source[name]
             };
         }
     }
     Object.defineProperties(to, properties);
 };
+/**
+An error to be thrown when a request fails.
+Contains a `code` property with error class code, like `ECONNREFUSED`.
+*/
 class RequestError extends Error {
     constructor(message, error, self) {
         var _a;
@@ -6690,7 +6811,7 @@ class RequestError extends Error {
         }
         this.timings = (_a = this.request) === null || _a === void 0 ? void 0 : _a.timings;
         // Recover the original stacktrace
-        if (!is_1.default.undefined(error.stack)) {
+        if (is_1.default.string(error.stack) && is_1.default.string(this.stack)) {
             const indexOfMessage = this.stack.indexOf(this.message) + this.message.length;
             const thisStackTrace = this.stack.slice(indexOfMessage).split('\n').reverse();
             const errorStackTrace = error.stack.slice(error.stack.indexOf(error.message) + error.message.length).split('\n').reverse();
@@ -6703,6 +6824,10 @@ class RequestError extends Error {
     }
 }
 exports.RequestError = RequestError;
+/**
+An error to be thrown when the server redirects you more than ten times.
+Includes a `response` property.
+*/
 class MaxRedirectsError extends RequestError {
     constructor(request) {
         super(`Redirected ${request.options.maxRedirects} times. Aborting.`, {}, request);
@@ -6710,6 +6835,10 @@ class MaxRedirectsError extends RequestError {
     }
 }
 exports.MaxRedirectsError = MaxRedirectsError;
+/**
+An error to be thrown when the server response code is not 2xx nor 3xx if `options.followRedirect` is `true`, but always except for 304.
+Includes a `response` property.
+*/
 class HTTPError extends RequestError {
     constructor(response) {
         super(`Response code ${response.statusCode} (${response.statusMessage})`, {}, response.request);
@@ -6717,6 +6846,10 @@ class HTTPError extends RequestError {
     }
 }
 exports.HTTPError = HTTPError;
+/**
+An error to be thrown when a cache method fails.
+For example, if the database goes down or there's a filesystem error.
+*/
 class CacheError extends RequestError {
     constructor(error, request) {
         super(error.message, error, request);
@@ -6724,6 +6857,9 @@ class CacheError extends RequestError {
     }
 }
 exports.CacheError = CacheError;
+/**
+An error to be thrown when the request body is a stream and an error occurs while reading from that stream.
+*/
 class UploadError extends RequestError {
     constructor(error, request) {
         super(error.message, error, request);
@@ -6731,6 +6867,10 @@ class UploadError extends RequestError {
     }
 }
 exports.UploadError = UploadError;
+/**
+An error to be thrown when the request is aborted due to a timeout.
+Includes an `event` and `timings` property.
+*/
 class TimeoutError extends RequestError {
     constructor(error, timings, request) {
         super(error.message, error, request);
@@ -6740,6 +6880,9 @@ class TimeoutError extends RequestError {
     }
 }
 exports.TimeoutError = TimeoutError;
+/**
+An error to be thrown when reading from response stream fails.
+*/
 class ReadError extends RequestError {
     constructor(error, request) {
         super(error.message, error, request);
@@ -6747,6 +6890,9 @@ class ReadError extends RequestError {
     }
 }
 exports.ReadError = ReadError;
+/**
+An error to be thrown when given an unsupported protocol.
+*/
 class UnsupportedProtocolError extends RequestError {
     constructor(options) {
         super(`Unsupported protocol "${options.url.protocol}"`, {}, options);
@@ -6765,6 +6911,9 @@ const proxiedRequestEvents = [
 class Request extends stream_1.Duplex {
     constructor(url, options = {}, defaults) {
         super({
+            // This must be false, to enable throwing after destroy
+            // It is used for retry logic in Promise API
+            autoDestroy: false,
             // It needs to be zero because we're just proxying the data to another stream
             highWaterMark: 0
         });
@@ -6776,6 +6925,7 @@ class Request extends stream_1.Duplex {
         this[kStopReading] = false;
         this[kTriggerRead] = false;
         this[kJobs] = [];
+        this.retryCount = 0;
         // TODO: Remove this when targeting Node.js >= 12
         this._progressCallbacks = [];
         const unlockWrite = () => this._unlockWrite();
@@ -6804,18 +6954,28 @@ class Request extends stream_1.Duplex {
         if (json || body || form) {
             this._lockWrite();
         }
-        (async (nonNormalizedOptions) => {
+        if (exports.kIsNormalizedAlready in options) {
+            this.options = options;
+        }
+        else {
+            try {
+                // @ts-expect-error Common TypeScript bug saying that `this.constructor` is not accessible
+                this.options = this.constructor.normalizeArguments(url, options, defaults);
+            }
+            catch (error) {
+                // TODO: Move this to `_destroy()`
+                if (is_1.default.nodeStream(options.body)) {
+                    options.body.destroy();
+                }
+                this.destroy(error);
+                return;
+            }
+        }
+        (async () => {
             var _a;
             try {
-                if (nonNormalizedOptions.body instanceof fs_1.ReadStream) {
-                    await waitForOpenFile(nonNormalizedOptions.body);
-                }
-                if (exports.kIsNormalizedAlready in nonNormalizedOptions) {
-                    this.options = nonNormalizedOptions;
-                }
-                else {
-                    // @ts-ignore Common TypeScript bug saying that `this.constructor` is not accessible
-                    this.options = this.constructor.normalizeArguments(url, nonNormalizedOptions, defaults);
+                if (this.options.body instanceof fs_1.ReadStream) {
+                    await waitForOpenFile(this.options.body);
                 }
                 const { url: normalizedURL } = this.options;
                 if (!normalizedURL) {
@@ -6833,6 +6993,8 @@ class Request extends stream_1.Duplex {
                 for (const job of this[kJobs]) {
                     job();
                 }
+                // Prevent memory leak
+                this[kJobs].length = 0;
                 this.requestInitialized = true;
             }
             catch (error) {
@@ -6845,10 +7007,10 @@ class Request extends stream_1.Duplex {
                     this.destroy(error);
                 }
             }
-        })(options);
+        })();
     }
     static normalizeArguments(url, options, defaults) {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e;
         const rawOptions = options;
         if (is_1.default.object(url) && !is_1.default.urlInstance(url)) {
             options = { ...defaults, ...url, ...options };
@@ -6901,7 +7063,9 @@ class Request extends stream_1.Duplex {
             is_1.assert.any([is_1.default.string, is_1.default.object, is_1.default.array, is_1.default.undefined], options.https.key);
             is_1.assert.any([is_1.default.string, is_1.default.object, is_1.default.array, is_1.default.undefined], options.https.certificate);
             is_1.assert.any([is_1.default.string, is_1.default.undefined], options.https.passphrase);
+            is_1.assert.any([is_1.default.string, is_1.default.buffer, is_1.default.array, is_1.default.undefined], options.https.pfx);
         }
+        is_1.assert.any([is_1.default.object, is_1.default.undefined], options.cacheOptions);
         // `options.method`
         if (is_1.default.string(options.method)) {
             options.method = options.method.toUpperCase();
@@ -6959,14 +7123,14 @@ class Request extends stream_1.Duplex {
         options.username = (_b = options.username) !== null && _b !== void 0 ? _b : '';
         options.password = (_c = options.password) !== null && _c !== void 0 ? _c : '';
         // `options.prefixUrl` & `options.url`
-        if (options.prefixUrl) {
+        if (is_1.default.undefined(options.prefixUrl)) {
+            options.prefixUrl = (_d = defaults === null || defaults === void 0 ? void 0 : defaults.prefixUrl) !== null && _d !== void 0 ? _d : '';
+        }
+        else {
             options.prefixUrl = options.prefixUrl.toString();
             if (options.prefixUrl !== '' && !options.prefixUrl.endsWith('/')) {
                 options.prefixUrl += '/';
             }
-        }
-        else {
-            options.prefixUrl = '';
         }
         if (is_1.default.string(options.url)) {
             if (options.url.startsWith('/')) {
@@ -6978,6 +7142,9 @@ class Request extends stream_1.Duplex {
             options.url = options_to_url_1.default(options.prefixUrl, options);
         }
         if (options.url) {
+            if ('port' in options) {
+                delete options.port;
+            }
             // Make it possible to change `options.prefixUrl`
             let { prefixUrl } = options;
             Object.defineProperty(options, 'prefixUrl', {
@@ -6999,6 +7166,7 @@ class Request extends stream_1.Duplex {
             }
             // Set search params
             if (options.searchParams) {
+                // eslint-disable-next-line @typescript-eslint/no-base-to-string
                 options.url.search = options.searchParams.toString();
             }
             // Protocol check
@@ -7032,7 +7200,7 @@ class Request extends stream_1.Duplex {
                 getCookieString = util_1.promisify(getCookieString.bind(options.cookieJar));
                 options.cookieJar = {
                     setCookie,
-                    getCookieString
+                    getCookieString: getCookieString
                 };
             }
         }
@@ -7040,12 +7208,44 @@ class Request extends stream_1.Duplex {
         const { cache } = options;
         if (cache) {
             if (!cacheableStore.has(cache)) {
-                cacheableStore.set(cache, new CacheableRequest(((requestOptions, handler) => requestOptions[kRequest](requestOptions, handler)), cache));
+                cacheableStore.set(cache, new CacheableRequest(((requestOptions, handler) => {
+                    const result = requestOptions[kRequest](requestOptions, handler);
+                    // TODO: remove this when `cacheable-request` supports async request functions.
+                    if (is_1.default.promise(result)) {
+                        // @ts-expect-error
+                        // We only need to implement the error handler in order to support HTTP2 caching.
+                        // The result will be a promise anyway.
+                        result.once = (event, handler) => {
+                            if (event === 'error') {
+                                result.catch(handler);
+                            }
+                            else if (event === 'abort') {
+                                // The empty catch is needed here in case when
+                                // it rejects before it's `await`ed in `_makeRequest`.
+                                (async () => {
+                                    try {
+                                        const request = (await result);
+                                        request.once('abort', handler);
+                                    }
+                                    catch (_a) { }
+                                })();
+                            }
+                            else {
+                                /* istanbul ignore next: safety check */
+                                throw new Error(`Unknown HTTP2 promise event: ${event}`);
+                            }
+                            return result;
+                        };
+                    }
+                    return result;
+                }), cache));
             }
         }
+        // `options.cacheOptions`
+        options.cacheOptions = { ...options.cacheOptions };
         // `options.dnsCache`
         if (options.dnsCache === true) {
-            options.dnsCache = new cacheable_lookup_1.default();
+            options.dnsCache = globalDnsCache;
         }
         else if (!is_1.default.undefined(options.dnsCache) && !options.dnsCache.lookup) {
             throw new TypeError(`Parameter \`dnsCache\` must be a CacheableLookup instance or a boolean, got ${is_1.default(options.dnsCache)}`);
@@ -7087,7 +7287,7 @@ class Request extends stream_1.Duplex {
         if (defaults && !areHooksDefault) {
             for (const event of exports.knownHookEvents) {
                 const defaultHooks = defaults.hooks[event];
-                if (defaultHooks.length !== 0) {
+                if (defaultHooks.length > 0) {
                     // See https://github.com/microsoft/TypeScript/issues/31445#issuecomment-576929044
                     options.hooks[event] = [
                         ...defaults.hooks[event],
@@ -7122,6 +7322,9 @@ class Request extends stream_1.Duplex {
         if ('passphrase' in options) {
             deprecation_warning_1.default('"options.passphrase" was never documented, please use "options.https.passphrase"');
         }
+        if ('pfx' in options) {
+            deprecation_warning_1.default('"options.pfx" was never documented, please use "options.https.pfx"');
+        }
         // Other options
         if ('followRedirects' in options) {
             throw new TypeError('The `followRedirects` option does not exist. Use `followRedirect` instead.');
@@ -7133,10 +7336,10 @@ class Request extends stream_1.Duplex {
                 }
             }
         }
-        options.maxRedirects = (_d = options.maxRedirects) !== null && _d !== void 0 ? _d : 0;
+        options.maxRedirects = (_e = options.maxRedirects) !== null && _e !== void 0 ? _e : 0;
         // Set non-enumerable properties
         exports.setNonEnumerableProperties([defaults, rawOptions], options);
-        return options;
+        return normalize_arguments_1.default(options, defaults);
     }
     _lockWrite() {
         const onLockedWrite = () => {
@@ -7222,7 +7425,7 @@ class Request extends stream_1.Duplex {
         }
         this[kBodySize] = Number(headers['content-length']) || undefined;
     }
-    async _onResponse(response) {
+    async _onResponseBase(response) {
         const { options } = this;
         const { url } = options;
         this[kOriginalResponse] = response;
@@ -7238,6 +7441,7 @@ class Request extends stream_1.Duplex {
         typedResponse.request = this;
         typedResponse.isFromCache = response.fromCache || false;
         typedResponse.ip = this.ip;
+        typedResponse.retryCount = this.retryCount;
         this[kIsFromCache] = typedResponse.isFromCache;
         this[kResponseSize] = Number(response.headers['content-length']) || undefined;
         this[kResponse] = response;
@@ -7275,7 +7479,7 @@ class Request extends stream_1.Duplex {
         }
         if (options.followRedirect && response.headers.location && redirectCodes.has(statusCode)) {
             // We're being redirected, we don't care about the response.
-            // It'd be besto to abort the request, but we can't because
+            // It'd be best to abort the request, but we can't because
             // we would have to sacrifice the TCP connection. We don't want that.
             response.resume();
             if (this[kRequest]) {
@@ -7298,6 +7502,8 @@ class Request extends stream_1.Duplex {
                 if ('form' in options) {
                     delete options.form;
                 }
+                this[kBody] = undefined;
+                delete options.headers['content-length'];
             }
             if (this.redirects.length >= options.maxRedirects) {
                 this._beforeError(new MaxRedirectsError(this));
@@ -7311,7 +7517,7 @@ class Request extends stream_1.Duplex {
                 const redirectString = redirectUrl.toString();
                 decodeURI(redirectString);
                 // Redirecting to a different site, clear sensitive data.
-                if (redirectUrl.hostname !== url.hostname) {
+                if (redirectUrl.hostname !== url.hostname || redirectUrl.port !== url.port) {
                     if ('host' in options.headers) {
                         delete options.headers.host;
                     }
@@ -7322,9 +7528,13 @@ class Request extends stream_1.Duplex {
                         delete options.headers.authorization;
                     }
                     if (options.username || options.password) {
-                        delete options.username;
-                        delete options.password;
+                        options.username = '';
+                        options.password = '';
                     }
+                }
+                else {
+                    redirectUrl.username = options.username;
+                    redirectUrl.password = options.password;
                 }
                 this.redirects.push(redirectString);
                 options.url = redirectUrl;
@@ -7341,13 +7551,9 @@ class Request extends stream_1.Duplex {
             }
             return;
         }
-        const limitStatusCode = options.followRedirect ? 299 : 399;
-        const isOk = (statusCode >= 200 && statusCode <= limitStatusCode) || statusCode === 304;
-        if (options.throwHttpErrors && !isOk) {
-            await this._beforeError(new HTTPError(typedResponse));
-            if (this.destroyed) {
-                return;
-            }
+        if (options.isStream && options.throwHttpErrors && !is_response_ok_1.isResponseOk(typedResponse)) {
+            this._beforeError(new HTTPError(typedResponse));
+            return;
         }
         response.on('readable', () => {
             if (this[kTriggerRead]) {
@@ -7379,6 +7585,15 @@ class Request extends stream_1.Duplex {
             destination.statusCode = statusCode;
         }
     }
+    async _onResponse(response) {
+        try {
+            await this._onResponseBase(response);
+        }
+        catch (error) {
+            /* istanbul ignore next: better safe than sorry */
+            this._beforeError(error);
+        }
+    }
     _onRequest(request) {
         const { options } = this;
         const { timeout, url } = options;
@@ -7386,17 +7601,15 @@ class Request extends stream_1.Duplex {
         this[kCancelTimeouts] = timed_out_1.default(request, timeout, url);
         const responseEventName = options.cache ? 'cacheableResponse' : 'response';
         request.once(responseEventName, (response) => {
-            this._onResponse(response);
+            void this._onResponse(response);
         });
         request.once('error', (error) => {
+            var _a;
             // Force clean-up, because some packages (e.g. nock) don't do this.
             request.destroy();
-            if (error instanceof timed_out_1.TimeoutError) {
-                error = new TimeoutError(error, this.timings, this);
-            }
-            else {
-                error = new RequestError(error.message, error, this);
-            }
+            // Node.js <= 12.18.2 mistakenly emits the response `end` first.
+            (_a = request.res) === null || _a === void 0 ? void 0 : _a.removeAllListeners('end');
+            error = error instanceof timed_out_1.TimeoutError ? new TimeoutError(error, this.timings, this) : new RequestError(error.message, error, this);
             this._beforeError(error);
         });
         this[kUnproxyEvents] = proxy_events_1.default(request, this, proxiedRequestEvents);
@@ -7410,14 +7623,11 @@ class Request extends stream_1.Duplex {
             body.once('error', (error) => {
                 this._beforeError(new UploadError(error, this));
             });
-            body.once('end', () => {
-                delete options.body;
-            });
         }
         else {
             this._unlockWrite();
             if (!is_1.default.undefined(body)) {
-                this._writeRequest(body, null, () => { });
+                this._writeRequest(body, undefined, () => { });
                 currentRequest.end();
                 this._lockWrite();
             }
@@ -7433,26 +7643,30 @@ class Request extends stream_1.Duplex {
             // TODO: Remove `utils/url-to-options.ts` when `cacheable-request` is fixed
             Object.assign(options, url_to_options_1.default(url));
             // `http-cache-semantics` checks this
+            // TODO: Fix this ignore.
+            // @ts-expect-error
             delete options.url;
+            let request;
             // This is ugly
-            const cacheRequest = cacheableStore.get(options.cache)(options, response => {
-                const typedResponse = response;
-                const { req } = typedResponse;
+            const cacheRequest = cacheableStore.get(options.cache)(options, async (response) => {
                 // TODO: Fix `cacheable-response`
-                typedResponse._readableState.autoDestroy = false;
-                if (req) {
-                    req.emit('cacheableResponse', typedResponse);
+                response._readableState.autoDestroy = false;
+                if (request) {
+                    (await request).emit('cacheableResponse', response);
                 }
-                resolve(typedResponse);
+                resolve(response);
             });
             // Restore options
             options.url = url;
             cacheRequest.once('error', reject);
-            cacheRequest.once('request', resolve);
+            cacheRequest.once('request', async (requestOrPromise) => {
+                request = requestOrPromise;
+                resolve(request);
+            });
         });
     }
     async _makeRequest() {
-        var _a;
+        var _a, _b, _c, _d, _e;
         const { options } = this;
         const { headers } = options;
         for (const key in headers) {
@@ -7478,10 +7692,13 @@ class Request extends stream_1.Duplex {
             // eslint-disable-next-line no-await-in-loop
             const result = await hook(options);
             if (!is_1.default.undefined(result)) {
-                // @ts-ignore Skip the type mismatch to support abstract responses
+                // @ts-expect-error Skip the type mismatch to support abstract responses
                 options.request = () => result;
                 break;
             }
+        }
+        if (options.body && this[kBody] !== options.body) {
+            this[kBody] = options.body;
         }
         const { agent, request, timeout, url } = options;
         if (options.dnsCache && !('lookup' in options)) {
@@ -7518,14 +7735,20 @@ class Request extends stream_1.Duplex {
         // Prepare plain HTTP request options
         options[kRequest] = realFn;
         delete options.request;
+        // TODO: Fix this ignore.
+        // @ts-expect-error
         delete options.timeout;
         const requestOptions = options;
+        requestOptions.shared = (_b = options.cacheOptions) === null || _b === void 0 ? void 0 : _b.shared;
+        requestOptions.cacheHeuristic = (_c = options.cacheOptions) === null || _c === void 0 ? void 0 : _c.cacheHeuristic;
+        requestOptions.immutableMinTimeToLive = (_d = options.cacheOptions) === null || _d === void 0 ? void 0 : _d.immutableMinTimeToLive;
+        requestOptions.ignoreCargoCult = (_e = options.cacheOptions) === null || _e === void 0 ? void 0 : _e.ignoreCargoCult;
         // If `dnsLookupIpVersion` is not present do not override `family`
         if (options.dnsLookupIpVersion !== undefined) {
             try {
                 requestOptions.family = dns_ip_version_1.dnsLookupIpVersionToFamily(options.dnsLookupIpVersion);
             }
-            catch (_b) {
+            catch (_f) {
                 throw new Error('Invalid `dnsLookupIpVersion` option value');
             }
         }
@@ -7549,6 +7772,9 @@ class Request extends stream_1.Duplex {
             if (options.https.passphrase) {
                 requestOptions.passphrase = options.https.passphrase;
             }
+            if (options.https.pfx) {
+                requestOptions.pfx = options.https.pfx;
+            }
         }
         try {
             let requestOrResponse = await fn(url, requestOptions);
@@ -7559,20 +7785,45 @@ class Request extends stream_1.Duplex {
             options.request = request;
             options.timeout = timeout;
             options.agent = agent;
+            // HTTPS options restore
+            if (options.https) {
+                if ('rejectUnauthorized' in options.https) {
+                    delete requestOptions.rejectUnauthorized;
+                }
+                if (options.https.checkServerIdentity) {
+                    // @ts-expect-error - This one will be removed when we remove the alias.
+                    delete requestOptions.checkServerIdentity;
+                }
+                if (options.https.certificateAuthority) {
+                    delete requestOptions.ca;
+                }
+                if (options.https.certificate) {
+                    delete requestOptions.cert;
+                }
+                if (options.https.key) {
+                    delete requestOptions.key;
+                }
+                if (options.https.passphrase) {
+                    delete requestOptions.passphrase;
+                }
+                if (options.https.pfx) {
+                    delete requestOptions.pfx;
+                }
+            }
             if (isClientRequest(requestOrResponse)) {
                 this._onRequest(requestOrResponse);
                 // Emit the response after the stream has been ended
             }
             else if (this.writable) {
                 this.once('finish', () => {
-                    this._onResponse(requestOrResponse);
+                    void this._onResponse(requestOrResponse);
                 });
                 this._unlockWrite();
                 this.end();
                 this._lockWrite();
             }
             else {
-                this._onResponse(requestOrResponse);
+                void this._onResponse(requestOrResponse);
             }
         }
         catch (error) {
@@ -7582,23 +7833,7 @@ class Request extends stream_1.Duplex {
             throw new RequestError(error.message, error, this);
         }
     }
-    async _beforeError(error) {
-        if (this.destroyed) {
-            return;
-        }
-        this[kStopReading] = true;
-        if (!(error instanceof RequestError)) {
-            error = new RequestError(error.message, error, this);
-        }
-        try {
-            const { response } = error;
-            if (response) {
-                response.setEncoding(this._readableState.encoding);
-                response.rawBody = await get_buffer_1.default(response);
-                response.body = response.rawBody.toString();
-            }
-        }
-        catch (_) { }
+    async _error(error) {
         try {
             for (const hook of this.options.hooks.beforeError) {
                 // eslint-disable-next-line no-await-in-loop
@@ -7609,6 +7844,87 @@ class Request extends stream_1.Duplex {
             error = new RequestError(error_.message, error_, this);
         }
         this.destroy(error);
+    }
+    _beforeError(error) {
+        if (this[kStopReading]) {
+            return;
+        }
+        const { options } = this;
+        const retryCount = this.retryCount + 1;
+        this[kStopReading] = true;
+        if (!(error instanceof RequestError)) {
+            error = new RequestError(error.message, error, this);
+        }
+        const typedError = error;
+        const { response } = typedError;
+        void (async () => {
+            if (response && !response.body) {
+                response.setEncoding(this._readableState.encoding);
+                try {
+                    response.rawBody = await get_buffer_1.default(response);
+                    response.body = response.rawBody.toString();
+                }
+                catch (_a) { }
+            }
+            if (this.listenerCount('retry') !== 0) {
+                let backoff;
+                try {
+                    let retryAfter;
+                    if (response && 'retry-after' in response.headers) {
+                        retryAfter = Number(response.headers['retry-after']);
+                        if (Number.isNaN(retryAfter)) {
+                            retryAfter = Date.parse(response.headers['retry-after']) - Date.now();
+                            if (retryAfter <= 0) {
+                                retryAfter = 1;
+                            }
+                        }
+                        else {
+                            retryAfter *= 1000;
+                        }
+                    }
+                    backoff = await options.retry.calculateDelay({
+                        attemptCount: retryCount,
+                        retryOptions: options.retry,
+                        error: typedError,
+                        retryAfter,
+                        computedValue: calculate_retry_delay_1.default({
+                            attemptCount: retryCount,
+                            retryOptions: options.retry,
+                            error: typedError,
+                            retryAfter,
+                            computedValue: 0
+                        })
+                    });
+                }
+                catch (error_) {
+                    void this._error(new RequestError(error_.message, error_, this));
+                    return;
+                }
+                if (backoff) {
+                    const retry = async () => {
+                        try {
+                            for (const hook of this.options.hooks.beforeRetry) {
+                                // eslint-disable-next-line no-await-in-loop
+                                await hook(this.options, typedError, retryCount);
+                            }
+                        }
+                        catch (error_) {
+                            void this._error(new RequestError(error_.message, error, this));
+                            return;
+                        }
+                        // Something forced us to abort the retry
+                        if (this.destroyed) {
+                            return;
+                        }
+                        this.destroy();
+                        this.emit('retry', retryCount, error);
+                    };
+                    this[kRetryTimeout] = setTimeout(retry, backoff);
+                    return;
+                }
+            }
+            void this._error(typedError);
+        })();
     }
     _read() {
         this[kTriggerRead] = true;
@@ -7631,6 +7947,7 @@ class Request extends stream_1.Duplex {
             }
         }
     }
+    // Node.js 12 has incorrect types, so the encoding must be a string
     _write(chunk, encoding, callback) {
         const write = () => {
             this._writeRequest(chunk, encoding, callback);
@@ -7643,6 +7960,10 @@ class Request extends stream_1.Duplex {
         }
     }
     _writeRequest(chunk, encoding, callback) {
+        if (this[kRequest].destroyed) {
+            // Probably the `ClientRequest` instance will throw
+            return;
+        }
         this._progressCallbacks.push(() => {
             this[kUploadedSize] += Buffer.byteLength(chunk, encoding);
             const progress = this.uploadProgress;
@@ -7652,7 +7973,7 @@ class Request extends stream_1.Duplex {
         });
         // TODO: What happens if it's from cache? Then this[kRequest] won't be defined.
         this[kRequest].write(chunk, encoding, (error) => {
-            if (!error && this._progressCallbacks.length !== 0) {
+            if (!error && this._progressCallbacks.length > 0) {
                 this._progressCallbacks.shift()();
             }
             callback(error);
@@ -7692,6 +8013,9 @@ class Request extends stream_1.Duplex {
     }
     _destroy(error, callback) {
         var _a;
+        this[kStopReading] = true;
+        // Prevent further retries
+        clearTimeout(this[kRetryTimeout]);
         if (kRequest in this) {
             this[kCancelTimeouts]();
             // TODO: Remove the next `if` when these get fixed:
@@ -7705,18 +8029,30 @@ class Request extends stream_1.Duplex {
         }
         callback(error);
     }
+    get _isAboutToError() {
+        return this[kStopReading];
+    }
+    /**
+    The remote IP address.
+    */
     get ip() {
         var _a;
-        return (_a = this[kRequest]) === null || _a === void 0 ? void 0 : _a.socket.remoteAddress;
+        return (_a = this.socket) === null || _a === void 0 ? void 0 : _a.remoteAddress;
     }
+    /**
+    Indicates whether the request has been aborted or not.
+    */
     get aborted() {
         var _a, _b, _c;
         return ((_b = (_a = this[kRequest]) === null || _a === void 0 ? void 0 : _a.destroyed) !== null && _b !== void 0 ? _b : this.destroyed) && !((_c = this[kOriginalResponse]) === null || _c === void 0 ? void 0 : _c.complete);
     }
     get socket() {
-        var _a;
-        return (_a = this[kRequest]) === null || _a === void 0 ? void 0 : _a.socket;
+        var _a, _b;
+        return (_b = (_a = this[kRequest]) === null || _a === void 0 ? void 0 : _a.socket) !== null && _b !== void 0 ? _b : undefined;
     }
+    /**
+    Progress event for downloading (receiving a response).
+    */
     get downloadProgress() {
         let percent;
         if (this[kResponseSize]) {
@@ -7734,6 +8070,9 @@ class Request extends stream_1.Duplex {
             total: this[kResponseSize]
         };
     }
+    /**
+    Progress event for uploading (sending a request).
+    */
     get uploadProgress() {
         let percent;
         if (this[kBodySize]) {
@@ -7751,15 +8090,42 @@ class Request extends stream_1.Duplex {
             total: this[kBodySize]
         };
     }
+    /**
+    The object contains the following properties:
+
+    - `start` - Time when the request started.
+    - `socket` - Time when a socket was assigned to the request.
+    - `lookup` - Time when the DNS lookup finished.
+    - `connect` - Time when the socket successfully connected.
+    - `secureConnect` - Time when the socket securely connected.
+    - `upload` - Time when the request finished uploading.
+    - `response` - Time when the request fired `response` event.
+    - `end` - Time when the response fired `end` event.
+    - `error` - Time when the request fired `error` event.
+    - `abort` - Time when the request fired `abort` event.
+    - `phases`
+        - `wait` - `timings.socket - timings.start`
+        - `dns` - `timings.lookup - timings.socket`
+        - `tcp` - `timings.connect - timings.lookup`
+        - `tls` - `timings.secureConnect - timings.connect`
+        - `request` - `timings.upload - (timings.secureConnect || timings.connect)`
+        - `firstByte` - `timings.response - timings.upload`
+        - `download` - `timings.end - timings.response`
+        - `total` - `(timings.end || timings.error || timings.abort) - timings.start`
+
+    If something has not been measured yet, it will be `undefined`.
+
+    __Note__: The time is a `number` representing the milliseconds elapsed since the UNIX epoch.
+    */
     get timings() {
         var _a;
         return (_a = this[kRequest]) === null || _a === void 0 ? void 0 : _a.timings;
     }
+    /**
+    Whether the response was retrieved from the cache.
+    */
     get isFromCache() {
         return this[kIsFromCache];
-    }
-    get _response() {
-        return this[kResponse];
     }
     pipe(destination, options) {
         if (this[kStartedReading]) {
@@ -7892,20 +8258,25 @@ module.exports = async (input, options, callback) => {
 
 	options = {
 		ALPNProtocols: ['h2', 'http/1.1'],
-		protocol: 'https:',
 		...input,
 		...options,
 		resolveSocket: true
 	};
 
+	if (!Array.isArray(options.ALPNProtocols) || options.ALPNProtocols.length === 0) {
+		throw new Error('The `ALPNProtocols` option must be an Array with at least one entry');
+	}
+
+	options.protocol = options.protocol || 'https:';
 	const isHttps = options.protocol === 'https:';
-	const agents = options.agent;
 
 	options.host = options.hostname || options.host || 'localhost';
 	options.session = options.tlsSession;
 	options.servername = options.servername || calculateServerName(options);
 	options.port = options.port || (isHttps ? 443 : 80);
 	options._defaultAgent = isHttps ? https.globalAgent : http.globalAgent;
+
+	const agents = options.agent;
 
 	if (agents) {
 		if (agents.addRequest) {
@@ -7935,11 +8306,98 @@ module.exports.protocolCache = cache;
 
 /***/ }),
 
+/***/ 992:
+/***/ (function(__unusedmodule, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const is_1 = __webpack_require__(534);
+const normalizeArguments = (options, defaults) => {
+    if (is_1.default.null_(options.encoding)) {
+        throw new TypeError('To get a Buffer, set `options.responseType` to `buffer` instead');
+    }
+    is_1.assert.any([is_1.default.string, is_1.default.undefined], options.encoding);
+    is_1.assert.any([is_1.default.boolean, is_1.default.undefined], options.resolveBodyOnly);
+    is_1.assert.any([is_1.default.boolean, is_1.default.undefined], options.methodRewriting);
+    is_1.assert.any([is_1.default.boolean, is_1.default.undefined], options.isStream);
+    is_1.assert.any([is_1.default.string, is_1.default.undefined], options.responseType);
+    // `options.responseType`
+    if (options.responseType === undefined) {
+        options.responseType = 'text';
+    }
+    // `options.retry`
+    const { retry } = options;
+    if (defaults) {
+        options.retry = { ...defaults.retry };
+    }
+    else {
+        options.retry = {
+            calculateDelay: retryObject => retryObject.computedValue,
+            limit: 0,
+            methods: [],
+            statusCodes: [],
+            errorCodes: [],
+            maxRetryAfter: undefined
+        };
+    }
+    if (is_1.default.object(retry)) {
+        options.retry = {
+            ...options.retry,
+            ...retry
+        };
+        options.retry.methods = [...new Set(options.retry.methods.map(method => method.toUpperCase()))];
+        options.retry.statusCodes = [...new Set(options.retry.statusCodes)];
+        options.retry.errorCodes = [...new Set(options.retry.errorCodes)];
+    }
+    else if (is_1.default.number(retry)) {
+        options.retry.limit = retry;
+    }
+    if (is_1.default.undefined(options.retry.maxRetryAfter)) {
+        options.retry.maxRetryAfter = Math.min(
+        // TypeScript is not smart enough to handle `.filter(x => is.number(x))`.
+        // eslint-disable-next-line unicorn/no-fn-reference-in-iterator
+        ...[options.timeout.request, options.timeout.connect].filter(is_1.default.number));
+    }
+    // `options.pagination`
+    if (is_1.default.object(options.pagination)) {
+        if (defaults) {
+            options.pagination = {
+                ...defaults.pagination,
+                ...options.pagination
+            };
+        }
+        const { pagination } = options;
+        if (!is_1.default.function_(pagination.transform)) {
+            throw new Error('`options.pagination.transform` must be implemented');
+        }
+        if (!is_1.default.function_(pagination.shouldContinue)) {
+            throw new Error('`options.pagination.shouldContinue` must be implemented');
+        }
+        if (!is_1.default.function_(pagination.filter)) {
+            throw new TypeError('`options.pagination.filter` must be implemented');
+        }
+        if (!is_1.default.function_(pagination.paginate)) {
+            throw new Error('`options.pagination.paginate` must be implemented');
+        }
+    }
+    // JSON mode
+    if (options.responseType === 'json' && options.headers.accept === undefined) {
+        options.headers.accept = 'application/json';
+    }
+    return options;
+};
+exports.default = normalizeArguments;
+
+
+/***/ }),
+
 /***/ 997:
 /***/ (function(module, __unusedexports, __webpack_require__) {
 
 "use strict";
 
+const {constants: BufferConstants} = __webpack_require__(293);
 const pump = __webpack_require__(453);
 const bufferStream = __webpack_require__(375);
 
@@ -7965,7 +8423,8 @@ async function getStream(inputStream, options) {
 	let stream;
 	await new Promise((resolve, reject) => {
 		const rejectPromise = error => {
-			if (error) { // A null check
+			// Don't retrieve an oversized buffer.
+			if (error && stream.getBufferedLength() <= BufferConstants.MAX_LENGTH) {
 				error.bufferedData = stream.getBufferedValue();
 			}
 

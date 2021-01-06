@@ -6,6 +6,6 @@ describe('delay', () => {
 		await delay(500);
 		const end = Date.now();
 
-		expect(end - start).toBeCloseTo(500, -1);
+		expect(end - start).toBeCloseTo(500, -2);
 	});
 });
