@@ -16,4 +16,4 @@ jobs:
           job_id: 5f031f6d9d1b5242e657443b
           variables: '{ "greeting": "GitHub Actions Test!" }'
           api_token: '${{ secrets.REFACTR_API_TOKEN }}'
-          api_url: 'https://api.erde.refactr.it/'
+          api_url: 'https://api.staging.refactr.it/'
