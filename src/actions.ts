@@ -1,3 +1,4 @@
+import * as core from '@actions/core';
 import { RunStatusEnum } from '@refactr/api-client';
 
 import { withError } from './withError';
@@ -83,9 +84,9 @@ export const checkRunStatus = withError(
   async (client: Client, projectId: string, runId: string): Promise<void> => {
     const stream = createRunStatusStream(client, projectId, runId);
     for await (const event of stream) {
-      console.info(`${event.occurred} [${event.level}]: ${event.message}`);
+      core.info(`${event.occurred} [${event.level}]: ${event.message}`);
       if (event.details) {
-        console.info(event.details);
+        core.info(event.details);
       }
     }
   }
