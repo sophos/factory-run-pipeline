@@ -83,8 +83,6 @@ export const checkRunStatus = withError(
   async (client: Client, projectId: string, runId: string): Promise<void> => {
     const stream = createRunStatusStream(client, projectId, runId);
     for await (const event of stream) {
-      event.output;
-
       console.info(`${event.occurred} [${event.level}]: ${event.message}`);
       if (event.details) {
         console.info(event.details);
