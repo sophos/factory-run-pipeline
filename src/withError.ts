@@ -4,9 +4,9 @@ import * as os from 'os';
 
 export const withError =
   <I extends Array<unknown>, O>(fn: (...args: I) => O) =>
-  (...args: I): O | undefined => {
+  async (...args: I): Promise<O | undefined> => {
     try {
-      return fn(...args);
+      return await fn(...args);
     } catch (err) {
       const isAxiosError: boolean = err.isAxiosError ?? false;
       if (isAxiosError) {
