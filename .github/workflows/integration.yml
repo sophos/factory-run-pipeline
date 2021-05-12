@@ -1,19 +1,29 @@
 on:
   pull_request:
-    branches: master
+    branches:
+      - master
   push:
-    branches: master
+    branches:
+      - master
 
 jobs:
   test:
     runs-on: ubuntu-latest
     name: Test integration with Refactr.it
+    outputs:
+      test_output: ${{ steps.test.outputs.test_output }}
     steps:
       - uses: actions/checkout@v2
-      - uses: ./
+      - id: test
+        uses: ./
         with:
           project_id: 5e1e27f24258f8003814ce3a
           job_id: 5f031f6d9d1b5242e657443b
           variables: '{ "greeting": "GitHub Actions Test!" }'
           api_token: '${{ secrets.REFACTR_API_TOKEN }}'
-          api_url: 'https://api.staging.refactr.it/'
+          api_url: 'https://api.staging.refactr.it/v1'
+  print_outputs:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - run: echo ${{ needs.test.outputs.test_output }}
