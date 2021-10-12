@@ -9,6 +9,7 @@
     "test:watch": "jest -w",
     "pre-commit": "run-p build test lint:fix"
   },
+  "license" : "MIT",
   "husky": {
     "hooks": {
       "pre-commit": "npm run pre-commit && git add src/ dist/"
