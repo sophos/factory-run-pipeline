@@ -4,7 +4,7 @@ A GitHub Action for triggering a job in the Refactr Platform.
 
 This action runs Refactr pipelines right from GitHub Actions, enabling you to execute Refactr pipelines from GitHub commits, pull requests, and other GitHub triggers.
 
-### Prerequisites
+## Prerequisites
 
 * An existing GitHub account.
 * An existing Refactr Project containing a Pipeline and an associated Job.
@@ -12,7 +12,7 @@ This action runs Refactr pipelines right from GitHub Actions, enabling you to ex
     * API tokens can be generated from the Refactr application by visiting the Account Settings page.
     * It is recommended to configure this value as a GitHub Secret. [See here for more information.](https://docs.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets))
 
-### Example Usage
+## Example Usage
 
 ```yaml
 on:
@@ -33,7 +33,7 @@ jobs:
           variables: '{ "my_var": "value" }'
 ```
 
-### Inputs
+## Inputs
 
 Input | Description | Required | Default |
 ----------|-------------|:----------:|:-------:|
@@ -43,6 +43,6 @@ Input | Description | Required | Default |
 | `variables` | Input variables for the Job. The variables must be in a form of stringified JSON object, e.g. `'{ "my_var": "value" }'` | no | - |
 | `api_url` | Refactr API base URL. Most users will not need to set this value. | no | https://api.refactr.it/ |
 
-### Outputs
+## Outputs
 
 The Action will report if the job run was successful. If the job run fails, the Action will report a failure. The output events from the run are streamed to the Action console.
