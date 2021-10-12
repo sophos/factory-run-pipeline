@@ -20,7 +20,7 @@
   "dependencies": {
     "@actions/core": "^1.2.6",
     "@actions/github": "^4.0.0",
-    "@refactr/api-client": "~0.7.0"
+    "@refactr/api-client": "v0.8.2-rc.1"
   },
   "devDependencies": {
     "ts-node": "^9.1.1",
