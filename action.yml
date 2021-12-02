@@ -1,5 +1,5 @@
-name: Refactr - Run Pipeline
-description: Runs a pipeline in the Refactr Platform.
+name: Sophos Factory - Run Pipeline
+description: Runs a pipeline in the Sophos Factory Platform.
 branding:
   color: blue
   icon: play-circle
@@ -17,7 +17,7 @@ inputs:
     description: Variables
     required: false
   api_url:
-    description: Refactr API base URL
+    description: Sophos Factory API base URL
     required: false
 runs:
   using: node12

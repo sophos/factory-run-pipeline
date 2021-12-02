@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Test integration with Refactr.it
+    name: Test integration with Sophos Factory
     outputs:
       test_output: ${{ steps.test.outputs.test_output }}
     steps:
