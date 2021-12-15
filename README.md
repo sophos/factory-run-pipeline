@@ -46,3 +46,8 @@ Input | Description | Required | Default |
 ## Outputs
 
 The Action will report if the job run was successful. If the job run fails, the Action will report a failure. The output events from the run are streamed to the Action console.
+
+## Terms of Use
+
+Please see [Sophos Services Agreement](https://www.sophos.com/en-us/legal/sophos-services-agreement.aspx) and [Sophos Privacy Notice](https://www.sophos.com/en-us/legal/sophos-group-privacy-notice.aspx).
+
