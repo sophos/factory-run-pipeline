@@ -1,16 +1,16 @@
-# Run a Refactr Pipeline
+# Run a Sophos Factory Pipeline
 
-A GitHub Action for triggering a job in the Refactr Platform.
+A GitHub Action for triggering a job in the Sophos Factory Platform.
 
-This action runs Refactr pipelines right from GitHub Actions, enabling you to execute Refactr pipelines from GitHub commits, pull requests, and other GitHub triggers.
+This action runs Sophos Factory pipelines right from GitHub Actions, enabling you to execute Sophos Factory pipelines from GitHub commits, pull requests, and other GitHub triggers.
 
 ## Prerequisites
 
 * An existing GitHub account.
-* An existing Refactr Project containing a Pipeline and an associated Job.
-* A Refactr Platform API token
-    * API tokens can be generated from the Refactr application by visiting the Account Settings page.
-    * It is recommended to configure this value as a GitHub Secret. [See here for more information.](https://docs.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets))
+* An existing Sophos Factory Project containing a Pipeline and an associated Job.
+* A Sophos Factory Platform API token
+    * API tokens can be generated from the Sophos Factory application by visiting the Account Settings page.
+    * Add the token as a [GitHub Secret in your repository](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository) and supply this secrets variable to the GitHub Action environment as demonstrated in the example below.
 
 ## Example Usage
 
@@ -22,14 +22,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Run a Refactr Job
+    name: Run a Sophos Factory Job
     steps:
       - uses: actions/checkout@v2
       - uses: refactr/action-run-pipeline@master
         with:
           project_id: <project-id>
           job_id: <job-id>
-          api_token: ${{ secrets.REFACTR_API_TOKEN }}
+          api_token: ${{ secrets.API_TOKEN }}
           variables: '{ "my_var": "value" }'
 ```
 
@@ -39,9 +39,9 @@ Input | Description | Required | Default |
 ----------|-------------|:----------:|:-------:|
 | `project_id` | ID of the project containing the job to run.|yes|-|
 | `job_id` | ID of the Job to run | yes |-|
-| `api_token` | Refactr API token | yes | - |
+| `api_token` | Sophos Factory API token | yes | - |
 | `variables` | Input variables for the Job. The variables must be in a form of stringified JSON object, e.g. `'{ "my_var": "value" }'` | no | - |
-| `api_url` | Refactr API base URL. Most users will not need to set this value. | no | https://api.refactr.it/ |
+| `api_url` | Sophos Factory API base URL. Most users will not need to set this value. | no | https://api.refactr.it/ |
 
 ## Outputs
 
