@@ -43,6 +43,5 @@ jobs:
         with:
           project_id: 5e0efaa23d6a2b0037099564
           job_id: 5f1b2680a23c2c6d81ecc742
-          variables:
-            greeting: GitHub Actions Test
+          variables: '{ "greeting": "GitHub Actions Test" }'
           api_token: '${{ secrets.REFACTR_API_TOKEN }}'
