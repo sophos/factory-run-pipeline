@@ -16,22 +16,11 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
-          node-version: '12.x'
+          node-version: '16'
+          cache: 'npm'
 
-      - name: Determine npm cache directory
-        id: npm-cache
-        run: |
-          echo "::set-output name=dir::$(npm config get cache)"
-
-      - name: Restore npm cache
-        uses: actions/cache@v1
-        with:
-          path: ${{ steps.npm-cache.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
       - run: npm ci
       - run: npm run lint
       - run: npm run test
@@ -41,7 +30,7 @@ jobs:
       - name: Run a pipeline with variables as object
         uses: refactr/action-run-pipeline@master
         with:
-          project_id: 5e0efaa23d6a2b0037099564
-          job_id: 5f1b2680a23c2c6d81ecc742
-          variables: '{ "greeting": "GitHub Actions Test" }'
-          api_token: '${{ secrets.REFACTR_API_TOKEN }}'
+          project_id: 61c21b61ce610a30584b4636
+          job_id: 61cb340ed42b9b0d71836560
+          api_token: '${{ secrets.MAIN_API_TOKEN }}'
+          api_url: 'https://api.main.refactr.it/v1'
