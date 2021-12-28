@@ -9,10 +9,10 @@ This document describes the process for creating a release and publishing a new 
 
 ## Create a Release
 
-1. Update any relevant dependencies.
+1. Bump the version in `package.json`. Update any relevant dependencies.
 2. Run `npm install` to regenerate the `package-lock.json`.
 3. Commit and Git tag these changes. Use `v` followed by the semantic version number, for example: `git tag -a v1.0.0`.
-4. Push the changes to the GitHub repository. Test workflows (`integration.yml` and `test.yml`) will run. Ensure the tests complete successfully.
+4. Push the changes to the GitHub repository. Test workflows (`test.yml`) will run. Ensure the tests complete successfully.
 5. Merge PRs to the `master` branch.
 6. Tag and [create the release on GitHub](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#creating-a-release). To publish the new version to the GitHub Marketplace, ensure the checkbox is selected on the release form page.
 
