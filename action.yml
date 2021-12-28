@@ -1,5 +1,5 @@
 name: Sophos Factory - Run Pipeline
-description: Runs a pipeline in the Sophos Factory Platform.
+description: Runs a Sophos Factory pipeline.
 branding:
   color: blue
   icon: play-circle

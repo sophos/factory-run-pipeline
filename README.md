@@ -1,15 +1,15 @@
 # Run a Sophos Factory Pipeline
 
-A GitHub Action for triggering a job on the Sophos Factory platform.
+A GitHub Action for triggering a Sophos Factory pipeline.
 
-This action runs Sophos Factory pipelines right from GitHub Actions, enabling you to execute Sophos Factory pipelines from GitHub commits, pull requests, and other GitHub triggers.
+This action runs Sophos Factory pipelines right from GitHub Actions, enabling you to execute pipelines as a result of GitHub commits, pull requests, and other GitHub triggers.
 
 ## Prerequisites
 
 * An existing GitHub repository for which you want to use this Action.
-* An existing Sophos Factory Project containing a Pipeline and an associated Job.
-* A Sophos Factory platform API token.
-    * API tokens can be generated from the Sophos Factory platform by visiting the Account Settings page.
+* An existing Sophos Factory project containing a pipeline and an associated job.
+* A Sophos Factory API token.
+    * API tokens can be generated from the Sophos Factory application by visiting the Account Settings page.
     * Add the token as a [GitHub Secret in your repository](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository) (e.g. with name `API_TOKEN`) and supply this secret to the GitHub Action environment as demonstrated in the example below.
 
 ## Example Usage
@@ -26,7 +26,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Run a Sophos Factory Job
+    name: Run Sophos Factory pipeline
     steps:
       - uses: actions/checkout@v2
       - uses: refactr/action-run-pipeline@master
