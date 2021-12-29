@@ -27,10 +27,10 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - name: Run a pipeline with variables as object
+      - name: Run test pipline
         uses: refactr/action-run-pipeline@master
         with:
-          project_id: 61c21b61ce610a30584b4636
-          job_id: 61cb340ed42b9b0d71836560
+          project_id: 61cca573d42b9b46428365c8
+          job_id: 61ccb67ad42b9b7cc08365d4
           api_token: '${{ secrets.MAIN_API_TOKEN }}'
           api_url: 'https://api.main.refactr.it/v1'
