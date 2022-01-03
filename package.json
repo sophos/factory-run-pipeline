@@ -1,6 +1,6 @@
 {
-  "name": "action-run-pipeline",
-  "version": "0.3.1",
+  "name": "run-pipeline",
+  "version": "1.0.0",
   "scripts": {
     "build": "ncc build src/index.ts --minify --out dist/",
     "lint:fix": "eslint --fix src src/__tests__",

@@ -29,7 +29,7 @@ jobs:
     name: Run Sophos Factory pipeline
     steps:
       - uses: actions/checkout@v2
-      - uses: refactr/action-run-pipeline@master
+      - uses: sophos-factory/run-pipeline@master
         with:
           project_id: # Your Project ID
           job_id: # Your Job ID
