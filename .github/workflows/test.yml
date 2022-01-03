@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run test pipline
-        uses: refactr/action-run-pipeline@master
+        uses: sophos-factory/run-pipeline@master
         with:
           project_id: 61cca573d42b9b46428365c8
           job_id: 61ccb67ad42b9b7cc08365d4

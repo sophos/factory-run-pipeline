@@ -1,5 +1,5 @@
 {
-  "name": "action-run-pipeline",
+  "name": "run-pipeline",
   "version": "0.3.1",
   "scripts": {
     "build": "ncc build src/index.ts --minify --out dist/",
