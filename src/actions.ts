@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import { RunStatusEnum } from '@refactr/api-client';
+import { RunStatusEnum } from '@sophos-factory/api-client';
 
 import { withError } from './withError';
 import { Client } from './api';

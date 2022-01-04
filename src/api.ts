@@ -1,4 +1,4 @@
-import { Configuration, JobsApi, RunsApi } from '@refactr/api-client';
+import { Configuration, JobsApi, RunsApi } from '@sophos-factory/api-client';
 
 export class Client {
   public readonly jobs: JobsApi;
