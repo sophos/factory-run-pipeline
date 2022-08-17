@@ -7,7 +7,7 @@ export const withError =
   async (...args: I): Promise<O | undefined> => {
     try {
       return await fn(...args);
-    } catch (err) {
+    } catch (err: any) {
       const isAxiosError: boolean = err.isAxiosError ?? false;
       if (isAxiosError) {
         const errors = (err as AxiosError).response?.data?.errors;

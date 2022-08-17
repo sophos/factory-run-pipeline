@@ -5,7 +5,8 @@ const config: Config.InitialOptions = {
   testMatch: ['**/?(*.)+(test).+(ts|js)'],
   transform: {
     '^.+\\.ts$': 'ts-jest'
-  }
+  },
+  testEnvironment: 'node'
 };
 
 export default config;
