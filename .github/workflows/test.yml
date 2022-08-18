@@ -32,5 +32,5 @@ jobs:
         with:
           project_id: 61cca573d42b9b46428365c8
           job_id: 61ccb67ad42b9b7cc08365d4
-          api_token: '${{ secrets.MAIN_API_TOKEN }}'
+          api_token: '${{ secrets.FACTORY_API_TOKEN }}'
           api_url: 'https://api.dev.factory.sophos.com/v1'
