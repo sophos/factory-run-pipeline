@@ -28,7 +28,7 @@ export const getRunOutputs = withError(
     projectId: string,
     runId: string
   ): Promise<Record<string, unknown> | undefined> => {
-    const { data } = await client.runs.getRun(projectId, runId);
+    const { data } = await client.runs.getRun(projectId, runId, ['outputs']);
 
     // @ts-expect-error: `outputs` property is not defined on `Run` type
     //                   but actually exists.
@@ -47,7 +47,7 @@ function createRunStatusStream(
   async function getRunEvents() {
     let run;
     try {
-      run = (await api.getRun(projectId, runId)).data;
+      run = (await api.getRun(projectId, runId, ['events'])).data;
     } catch (err) {
       return {
         events: [],
