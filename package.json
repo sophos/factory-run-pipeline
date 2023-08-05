@@ -1,6 +1,6 @@
 {
   "name": "run-pipeline",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "scripts": {
     "build": "ncc build src/index.ts --minify --out dist/",
     "lint:fix": "eslint --fix src src/__tests__",
@@ -18,7 +18,7 @@
   "dependencies": {
     "@actions/core": "^1.2.6",
     "@actions/github": "^5.0.3",
-    "@sophos-factory/api-client": "^1.0.4"
+    "@sophos-factory/api-client": "^2.0.0"
   },
   "devDependencies": {
     "@types/axios": "^0.14.0",
