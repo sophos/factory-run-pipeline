@@ -39,13 +39,13 @@ jobs:
 
 ## Inputs
 
-| Input        | Description                                                                                                             | Required |                Default                |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------- | :------: | :-----------------------------------: |
-| `project_id` | ID of the project containing the job to run.                                                                            |   yes    |                   -                   |
-| `job_id`     | ID of the Job to run                                                                                                    |   yes    |                   -                   |
-| `api_token`  | Sophos Factory API token                                                                                                |   yes    |                   -                   |
-| `variables`  | Input variables for the Job. The variables must be in a form of stringified JSON object, e.g. `'{ "my_var": "value" }'` |    no    |                   -                   |
-| `api_url`    | Sophos Factory API base URL. Most users will not need to set this value.                                                |    no    | https://api.dev.factory.sophos.com/v1 |
+| Input        | Description                                                                                                             | Required |              Default              |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------- | :------: | :-------------------------------: |
+| `project_id` | ID of the project containing the job to run.                                                                            |   yes    |                 -                 |
+| `job_id`     | ID of the Job to run                                                                                                    |   yes    |                 -                 |
+| `api_token`  | Sophos Factory API token                                                                                                |   yes    |                 -                 |
+| `variables`  | Input variables for the Job. The variables must be in a form of stringified JSON object, e.g. `'{ "my_var": "value" }'` |    no    |                 -                 |
+| `api_url`    | Sophos Factory API base URL. Most users will not need to set this value.                                                |    no    | https://api.factory.sophos.com/v1 |
 
 ## Outputs
 
