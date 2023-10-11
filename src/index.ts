@@ -5,8 +5,8 @@ import { Client } from './api';
 import { isPOJO } from './isPOJO';
 
 const DEFAULT_API_URL = 'https://api.us-west-2.factory.sophos.com/v1';
-core.log(DEFAULT_API_URL)
-core.log(core.getInput('api_url'))
+core.debug(DEFAULT_API_URL)
+core.debug(core.getInput('api_url'))
 (async function main() {
   const authToken = core.getInput('api_token');
   const projectId = core.getInput('project_id');
@@ -36,7 +36,8 @@ core.log(core.getInput('api_url'))
       return core.setFailed('Expected `variables` field to be JSON object!');
     }
   }
-
+  core.debug(DEFAULT_API_URL)
+  core.debug(core.getInput('api_url'))
   const client = new Client(
     core.getInput('api_url') || DEFAULT_API_URL,
     authToken
