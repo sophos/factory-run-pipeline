@@ -35,7 +35,8 @@ const DEFAULT_API_URL = 'https://api.us-west-2.factory.sophos.com/v1';
       return core.setFailed('Expected `variables` field to be JSON object!');
     }
   }
-
+  core.log(DEFAULT_API_URL)
+  core.log(core.getInput('api_url'))
   const client = new Client(
     core.getInput('api_url') || DEFAULT_API_URL,
     authToken
