@@ -4,7 +4,7 @@ import { checkRunStatus, getRunOutputs, scheduleJob } from './actions';
 import { Client } from './api';
 import { isPOJO } from './isPOJO';
 
-const DEFAULT_API_URL = 'https://api.factory.sophos.com/v1';
+const DEFAULT_API_URL = 'https://api.us-west-2.factory.sophos.com/v1';
 
 (async function main() {
   const authToken = core.getInput('api_token');
