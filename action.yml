@@ -20,5 +20,5 @@ inputs:
     description: Sophos Factory API base URL
     required: false
 runs:
-  using: node16
+  using: node20
   main: dist/index.js
